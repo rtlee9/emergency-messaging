@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ parent.fullname }}{% endblock %}
+{% block title %}{{ address.address_1 }}{% endblock %}
 
 {% block content %}
-  <h1>{{ parent.fullname }}</h1>
+  <h1>{{ address }}</h1>
   <form class="form-horizontal" method="post">
     {% csrf_token %}
     {{ form|crispy }}

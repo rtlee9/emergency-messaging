@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Address: {{ object.address_1 }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+
+      <h2>{{ object.address_1 }}</h2>
+      <p>
+      {{ object.address_1 }}</br>
+      {{ object.address_2 }}</br>
+      {{ object.city }} {{ object.state }}, {{ object.zip_code }}
+      </p>
+
+    </div>
+  </div>
+
+<!-- Action buttons -->
+<div class="row">
+  <div class="col-sm-12">
+    <a class="btn btn-outline-primary" href="{% url 'students:address-update' object.pk %}" role="button">Edit</a>
+  </div>
+</div>
+<!-- End Action buttons -->
+
+</div>
+{% endblock content %}
+

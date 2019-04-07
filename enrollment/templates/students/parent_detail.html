@@ -11,10 +11,18 @@
       <h2>{{ object.full_name }}</h2>
       {% if object.email %}<a href="mailto:{{ object.email }}">{{ object.email }}</a>{% endif %}
       {% if object.phone_number %}<p>{{ object.phone_number }}</p>{% endif %}
+      {% if object.address %}
+      <p>
+      {{ object.address.address_1 }}</br>
+      {{ object.address.address_2 }}</br>
+      {{ object.address.city }} {{ object.address.state }}, {{ object.address.zip_code }}
+      </p><a class="btn btn-outline-secondary" href="{% url 'students:address-update' object.address.pk %}" role="button">Edit address</a></p>
+      </p>
+      {% endif %}
       {% if object.students %}
       <h3>Children:</h3>
       {% for child in object.students.all %}
-      <p>{{ child }}</p>
+      <p><a href="{% url 'students:student-detail' child.pk %}">{{ child }}</a></p>
       {% endfor %}
       {% endif %}
     </div>

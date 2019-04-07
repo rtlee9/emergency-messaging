@@ -1,23 +1,20 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ parent.fullname }}{% endblock %}
+{% block title %}{{ address.address_1 }}{% endblock %}
 
 {% block content %}
-  <h1>{{ parent.fullname }}</h1>
+  <h1>{{ address }}</h1>
   <form class="form-horizontal" method="post">
     {% csrf_token %}
     {{ form|crispy }}
+    <p>Are you sure you want to delete {{ object }}?</p>
     <div class="control-group">
       <div class="controls">
-	<button type="submit" class="btn btn-primary">
-	{% if request.resolver_match.url_name|slice:"-3:" == "add"  %}
-	Add
-	{% else %}
-	Update
-        {% endif %}
-	</button>
+        <button type="submit" class="btn btn-danger">Update</button>
       </div>
     </div>
   </form>
 {% endblock %}
+
+

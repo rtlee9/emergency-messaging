@@ -8,9 +8,12 @@
 
   <div class="list-group">
     {% for parent in parent_list %}
-      <a href="{% url 'students:parent-detail' parent.pk %}" class="list-group-item">
-        <h4 class="list-group-item-heading">{{ parent.full_name }}</h4>
+    <div class="list-group-item">
+      <h5 class="list-group-item-heading">{{ parent.full_name }}</h4>
+      <a href="{% url 'students:parent-detail' parent.pk %}">
+	<button class="btn btn-outline-secondary">View</button>
       </a>
+    </div>
     {% endfor %}
   </div>
 

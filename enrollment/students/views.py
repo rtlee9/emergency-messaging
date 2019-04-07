@@ -29,6 +29,29 @@ class StudentDelete(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('students:student-list')
 
 
+class AddressDetailView(LoginRequiredMixin, DetailView):
+    model = models.Address
+
+
+class AddressListView(LoginRequiredMixin, ListView):
+    model = models.Address
+
+
+class AddressCreate(LoginRequiredMixin, CreateView):
+    model = models.Address
+    fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
+
+
+class AddressUpdate(LoginRequiredMixin, UpdateView):
+    model = models.Address
+    fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
+
+
+class AddressDelete(LoginRequiredMixin, DeleteView):
+    model = models.Address
+    success_url = reverse_lazy('students:address-list')
+
+
 class ParentDetailView(LoginRequiredMixin, DetailView):
     model = models.Parent
 
@@ -39,12 +62,12 @@ class ParentListView(LoginRequiredMixin, ListView):
 
 class ParentCreate(LoginRequiredMixin, CreateView):
     model = models.Parent
-    fields = ['first_name', 'last_name', 'email', 'phone_number', 'students']
+    fields = ['first_name', 'last_name', 'email', 'phone_number', 'students', 'address']
 
 
 class ParentUpdate(LoginRequiredMixin, UpdateView):
     model = models.Parent
-    fields = ['first_name', 'last_name', 'email', 'phone_number', 'students']
+    fields = ['first_name', 'last_name', 'email', 'phone_number', 'students', 'address']
 
 
 class ParentDelete(LoginRequiredMixin, DeleteView):

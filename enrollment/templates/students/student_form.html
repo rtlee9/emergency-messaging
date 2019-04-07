@@ -10,7 +10,13 @@
     {{ form|crispy }}
     <div class="control-group">
       <div class="controls">
-        <button type="submit" class="btn btn-primary">Update</button>
+	<button type="submit" class="btn btn-primary">
+	{% if request.resolver_match.url_name|slice:"-3:" == "add"  %}
+	Add
+	{% else %}
+	Update
+        {% endif %}
+	</button>
       </div>
     </div>
   </form>
