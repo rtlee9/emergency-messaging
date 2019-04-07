@@ -1,3 +1,6 @@
+django-phonenumber-field==2.3.1
+phonenumbers==8.10.9
+django-localflavor-us==1.1
 pytz==2018.9  # https://github.com/stub42/pytz
 python-slugify==3.0.2  # https://github.com/un33k/python-slugify
 Pillow==6.0.0  # https://github.com/python-pillow/Pillow

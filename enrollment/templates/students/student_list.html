@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Students</h2>
+
+  <div class="list-group">
+    {% for student in student_list %}
+      <a href="{% url 'students:student-detail' student.pk %}" class="list-group-item">
+        <h4 class="list-group-item-heading">{{ student.full_name }}</h4>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock content %}

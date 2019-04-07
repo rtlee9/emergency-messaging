@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Student: {{ object.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+
+      <h2>{{ object.full_name }}</h2>
+      {% if object.first_name %}
+        <p>{{ object.first_name }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+<!-- Action buttons -->
+<div class="row">
+  <div class="col-sm-12">
+    <a class="btn btn-primary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
+    <!-- Your Stuff: Custom user template urls -->
+  </div>
+</div>
+<!-- End Action buttons -->
+
+</div>
+{% endblock content %}
+
