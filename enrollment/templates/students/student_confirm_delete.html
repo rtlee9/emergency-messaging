@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ student.fullname }}{% endblock %}
+
+{% block content %}
+  <h1>{{ student.fullname }}</h1>
+  <form class="form-horizontal" method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <p>Are you sure you want to delete {{ object }}?</p>
+    <div class="control-group">
+      <div class="controls">
+        <button type="submit" class="btn btn-danger">Update</button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+
+

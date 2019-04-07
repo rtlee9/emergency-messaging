@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Parent: {{ object.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+      <h2>{{ object.full_name }}</h2>
+      {% if object.email %}<a href="mailto:{{ object.email }}">{{ object.email }}</a>{% endif %}
+      {% if object.phone_number %}<p>{{ object.phone_number }}</p>{% endif %}
+    </div>
+  </div>
+
+<!-- Action buttons -->
+<div class="row">
+  <div class="col-sm-12">
+    <a class="btn btn-outline-primary" href="{% url 'students:parent-update' object.pk %}" role="button">Edit</a>
+    <a class="btn btn-outline-danger" href="{% url 'students:parent-delete' object.pk %}" role="button">Delete</a>
+    <!-- Your Stuff: Custom user template urls -->
+  </div>
+</div>
+<!-- End Action buttons -->
+
+</div>
+{% endblock content %}
+

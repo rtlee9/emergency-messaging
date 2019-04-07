@@ -13,6 +13,9 @@ class Person(models.Model):
         "Returns the person's full name."
         return '%s %s' % (self.first_name, self.last_name)
 
+    def __str__(self):
+        return self.full_name
+
     class Meta:
         abstract = True
 
@@ -37,6 +40,9 @@ class Parent(Person):
     email = models.EmailField()
     phone_number = PhoneNumberField()
     address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
+
+    def get_absolute_url(self):
+        return reverse('students:parent-detail', kwargs={'pk': self.pk})
 
 
 class ClassRoom(models.Model):
