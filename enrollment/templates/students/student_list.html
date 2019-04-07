@@ -13,5 +13,12 @@
       </a>
     {% endfor %}
   </div>
+
+  <div class="control-group">
+    <div class="controls">
+      <a href="{% url 'students:student-add' %}"><button class="btn btn-outline-primary">Add student</button></a>
+    </div>
+  </div>
+
 </div>
 {% endblock content %}

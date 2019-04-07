@@ -13,13 +13,19 @@
       {% if object.first_name %}
         <p>{{ object.first_name }}</p>
       {% endif %}
+      {% if object.parent_set %}
+      <h3>Parents:</h3>
+      {% for parent in object.parent_set.all %}
+      <p>{{ parent }}</p>
+      {% endfor %}
+      {% endif %}
     </div>
   </div>
 
 <!-- Action buttons -->
 <div class="row">
   <div class="col-sm-12">
-    <a class="btn btn-primary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
+    <a class="btn btn-outline-primary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
     <!-- Your Stuff: Custom user template urls -->
   </div>
 </div>
