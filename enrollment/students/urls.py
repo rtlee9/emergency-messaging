@@ -19,4 +19,5 @@ urlpatterns = [
     path('parents/add/', views.ParentCreate.as_view(), name='parent-add'),
     path('parents/<int:pk>/update/', views.ParentUpdate.as_view(), name='parent-update'),
     path('parents/<int:pk>/delete/', views.ParentDelete.as_view(), name='parent-delete'),
+    path('sms', views.sms_response)
 ]

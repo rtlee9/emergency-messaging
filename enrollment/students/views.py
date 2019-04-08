@@ -1,9 +1,16 @@
+import logging
+from os import getenv
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
+from django.http import HttpResponse
+from twilio.twiml.messaging_response import MessagingResponse
 
 from enrollment.students import models
+
+logger = logging.getLogger('enrollment.students.views')
 
 
 class StudentDetailView(LoginRequiredMixin, DetailView):
@@ -73,3 +80,24 @@ class ParentUpdate(LoginRequiredMixin, UpdateView):
 class ParentDelete(LoginRequiredMixin, DeleteView):
     model = models.Parent
     success_url = reverse_lazy('students:parent-list')
+
+
+@csrf_exempt
+def sms_response(request):
+    # Start our TwiML response
+    body = request.POST.get('Body')
+    logger.debug(body)
+    resp = MessagingResponse()
+
+    # authenticate
+    code = getenv('SMS_PIN')
+    if code is None:
+        logger.error('No SMS PIN is set')
+        return HttpResponse('PIN code missing on server', status=500)
+    if not body.strip().startswith(code):
+        resp.message("Incorrect PIN")
+    else:
+        message = body[len(code):]
+        resp.message(f"Your message has been sent: {message}")
+
+    return HttpResponse(str(resp))
