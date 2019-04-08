@@ -27,6 +27,9 @@ class Address(models.Model):
     state = USStateField()
     zip_code = models.CharField(max_length=5)
 
+    class Meta:
+        ordering = ['address_1']
+
     def __str__(self):
         return f"""
         {self.address_1}
@@ -40,6 +43,9 @@ class Address(models.Model):
 
 class Student(Person):
     birth_date = models.DateField()
+
+    class Meta:
+        ordering = ['first_name', 'last_name', 'birth_date']
 
     def get_absolute_url(self):
         return reverse('students:student-detail', kwargs={'pk': self.pk})
