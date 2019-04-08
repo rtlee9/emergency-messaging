@@ -11,7 +11,7 @@ SECRET_KEY = env(
     default="l7LDcfekZnLCZEp5Kcd9HIW6Ugx1GBFXc9GFn9vlCfd0H7JT9c3SmCReZzXU1ZMb",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", ".ngrok.io"]
 
 LOGGING = {
     "version": 1,
