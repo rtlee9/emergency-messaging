@@ -26,6 +26,7 @@
 <div class="row">
   <div class="col-sm-12">
     <a class="btn btn-outline-primary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
+    <a class="btn btn-outline-danger" href="{% url 'students:student-delete' object.pk %}" role="button">Delete</a>
   </div>
 </div>
 <!-- End Action buttons -->
