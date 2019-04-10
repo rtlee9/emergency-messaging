@@ -1,5 +1,6 @@
 from .base import *  # noqa
 from .base import env
+from os import getenv
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -15,6 +16,7 @@ ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", ".ngrok.io"]
 
 LOGGING = {
     "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
@@ -23,19 +25,18 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         }
     },
     'loggers': {
-        'enrollment': {
-            'level': 'DEBUG',
+        'enrollment.students': {
+            'level': getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
             "handlers": ["console"],
             'propagate': True,
         },
         "django.db.backends": {
-            "level": "DEBUG",
+            "level": "INFO",
             "handlers": ["console"],
             "propagate": False,
         },
