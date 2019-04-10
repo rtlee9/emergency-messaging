@@ -19,7 +19,7 @@
       </p><a class="btn btn-outline-secondary" href="{% url 'students:address-update' object.address.pk %}" role="button">Edit address</a></p>
       </p>
       {% endif %}
-      {% if object.students %}
+      {% if object.students.all %}
       <h3>Children:</h3>
       {% for child in object.students.all %}
       <p><a href="{% url 'students:student-detail' child.pk %}">{{ child }}</a></p>
