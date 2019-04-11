@@ -31,7 +31,8 @@
 <!-- Action buttons -->
 <div class="row">
   <div class="col-sm-12">
-    <a class="btn btn-outline-primary" href="{% url 'students:parent-update' object.pk %}" role="button">Edit</a>
+    <a class="btn btn-outline-primary" href="{% url 'students:parent-update' object.pk %}{% if request.GET.student_id %}?student_id={{ request.GET.student_id }}{% endif %}" role="button">Edit</a>
+    <a class="btn btn-outline-secondary" href="{% url 'students:address-add' %}?parent_id={{ object.pk }}" role="button">Create address</a>
     <a class="btn btn-outline-danger" href="{% url 'students:parent-delete' object.pk %}" role="button">Delete</a>
   </div>
 </div>

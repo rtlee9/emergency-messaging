@@ -10,7 +10,7 @@
     {% for parent in parent_list %}
     <div class="list-group-item">
       <h5 class="list-group-item-heading">{{ parent.full_name }}</h4>
-      <a href="{% url 'students:parent-detail' parent.pk %}">
+      <a href="{% url 'students:parent-detail' parent.pk %}{% if request.GET.student_id %}?student_id={{ request.GET.student_id }}{% endif %}">
 	<button class="btn btn-outline-secondary">View</button>
       </a>
     </div>

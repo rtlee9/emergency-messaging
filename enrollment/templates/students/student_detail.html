@@ -13,7 +13,7 @@
       {% if object.first_name %}
         <p>{{ object.first_name }}</p>
       {% endif %}
-      {% if object.parent_set %}
+      {% if object.parent_set.all %}
       <h3>Parents:</h3>
       {% for parent in object.parent_set.all %}
       <p><a href="{% url 'students:parent-detail' parent.pk %}">{{ parent }}</a></p>
@@ -25,7 +25,11 @@
 <!-- Action buttons -->
 <div class="row">
   <div class="col-sm-12">
-    <a class="btn btn-outline-primary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
+    {% if not object.parent_set.all %}
+    <a class="btn btn-outline-primary" href="{% url 'students:parent-list' %}?student_id={{ object.pk }}" role="button">Select existing parent</a>
+    <a class="btn btn-outline-primary" href="{% url 'students:parent-add' %}?student_id={{ object.pk }}" role="button">Add new parent</a>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'students:student-update' object.pk %}" role="button">Edit</a>
     <a class="btn btn-outline-danger" href="{% url 'students:student-delete' object.pk %}" role="button">Delete</a>
   </div>
 </div>
