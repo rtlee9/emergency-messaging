@@ -15,8 +15,8 @@ urlpatterns = [
     # User management
     path("users/", include("enrollment.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    # Your stuff: custom urls includes go here
     path("", include("enrollment.students.urls", namespace="students")),
+    path("", include("enrollment.messaging.urls", namespace="messaging")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

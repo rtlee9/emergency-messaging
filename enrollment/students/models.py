@@ -54,7 +54,7 @@ class Student(Person):
 class Parent(Person):
     students = models.ManyToManyField(Student)
     email = models.EmailField()
-    phone_number = PhoneNumberField()
+    phone_number = PhoneNumberField(unique=True)
     address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
 
     def get_absolute_url(self):

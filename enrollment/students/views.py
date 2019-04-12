@@ -7,15 +7,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, ListView
 from django.http import HttpResponse, HttpResponseRedirect
 
-from twilio.twiml.messaging_response import MessagingResponse
-from twilio.rest import Client
-
 from enrollment.students import models
 
-logger = logging.getLogger('enrollment.students.views')
-account_sid = getenv('TWILIO_SID')
-auth_token = getenv('TWILIO_TOKEN')
-client = Client(account_sid, auth_token)
+logger = logging.getLogger(__name__)
 
 
 class StudentDetailView(LoginRequiredMixin, DetailView):
@@ -126,49 +120,3 @@ class ParentUpdate(LoginRequiredMixin, UpdateView):
 class ParentDelete(LoginRequiredMixin, DeleteView):
     model = models.Parent
     success_url = reverse_lazy('students:parent-list')
-
-
-@csrf_exempt
-def sms_response(request):
-    if request.method != 'POST':
-        return HttpResponse(f'{request.method} request not supported', status=405)
-    from_number = request.POST.get('From')
-    body = request.POST.get('Body')
-    logger.debug(from_number)
-    logger.debug(body)
-
-    # authenticate
-    code = getenv('SMS_PIN')
-    if code is None:
-        logger.error('No SMS PIN is set')
-        return HttpResponse('PIN code missing on server', status=500)
-    if not body.strip().startswith(code):
-        logger.warning('Incorect PIN')
-        logger.warning(body)
-        resp = MessagingResponse()
-        resp.message("Incorrect PIN")
-        return HttpResponse(str(resp))
-    else:
-        resp = MessagingResponse()
-        message = body[len(code):]
-        resp.message(f"Your message has been sent: {message}")
-
-    parent_phone_numbers = models.Parent.objects.\
-        values_list('phone_number', flat=True).\
-        distinct('phone_number')
-    logger.debug(parent_phone_numbers)
-
-    if not from_number:
-        logger.debug('No phone number; must be testing')
-        return HttpResponse(str(resp))
-
-    for to_number in parent_phone_numbers:
-        twilio_message = client.messages.create(
-            body=message,
-            from_='+17472394729',
-            to=to_number,
-        )
-        logger.debug(f'Twilio message to {to_number} SID {twilio_message.sid}')
-
-    return HttpResponse(str(resp))
-

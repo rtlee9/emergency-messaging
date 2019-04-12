@@ -75,6 +75,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "enrollment.users.apps.UsersAppConfig",
     "enrollment.students.apps.StudentsAppConfig",
+    "enrollment.messaging.apps.MessagingAppConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
