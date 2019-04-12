@@ -30,7 +30,7 @@ LOGGING = {
         }
     },
     'loggers': {
-        'enrollment.students': {
+        'enrollment': {
             'level': getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
             "handlers": ["console"],
             'propagate': True,
