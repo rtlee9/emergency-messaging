@@ -1,6 +1,7 @@
 import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.urls import reverse
 
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -42,6 +43,7 @@ def sms_response(request):
     body = request.POST.get('Body')
     sid = request.POST.get('MessageSid')
     status = request.POST.get('SmsStatus')
+    callback = request.build_absolute_uri(reverse('messaging:sms-status'))
 
     # handle errors
     if not from_number:
@@ -82,7 +84,7 @@ def sms_response(request):
     if not body.strip().startswith(settings.SMS_PIN):
         logger.warning(f'Incorect PIN for SID {sid}')
         MessageStatus(status='auth_fail', sid=sid).save()
-        send_message(body="Incorrect PIN", to=from_number)
+        send_message(body="Incorrect PIN", to=from_number, callback=callback)
         return HttpResponse()
     else:
         clean_body = body[len(settings.SMS_PIN):]
@@ -96,19 +98,19 @@ def sms_response(request):
     logger.debug(parent_phone_numbers)
 
     for to_number in parent_phone_numbers:
-        send_message(body=clean_body, to=to_number)
+        send_message(body=clean_body, to=to_number, callback=callback)
 
     # send message and return empty response
-    send_message(body=resp, to=from_number)
+    send_message(body=resp, to=from_number, callback=callback)
     return HttpResponse()
 
 
-def send_message(body, to):
+def send_message(body, to, callback=None):
     twilio_message = client.messages.create(
         body=body,
         from_=settings.TWILIO_NUMBER,
         to=to,
-        status_callback='http://7cb8eb62.ngrok.io/sms/status',
+        status_callback=callback,
     )
     logger.info(f'Twilio message to {to} SID {twilio_message.sid}')
     message_out = Message(
