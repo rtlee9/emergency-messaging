@@ -239,3 +239,7 @@ SOCIALACCOUNT_ADAPTER = "enrollment.users.adapters.SocialAccountAdapter"
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+TWILIO_SID = env('TWILIO_SID')
+TWILIO_TOKEN = env('TWILIO_TOKEN')
+SMS_PIN = env('SMS_PIN')

@@ -87,3 +87,4 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+TWILIO_NUMBER = '+15005550006'  # twilio magic number

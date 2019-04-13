@@ -7,13 +7,10 @@ from twilio.rest import Client
 
 from enrollment.students.models import Parent
 from enrollment.messaging.models import Message, MessageStatus
-from enrollment.messaging import account_sid, auth_token, pin, twilio_number
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
-client = Client(account_sid, auth_token)
-
-if pin is None:
-    logger.error('No SMS PIN is set')
+client = Client(settings.TWILIO_SID, settings.TWILIO_TOKEN)
 
 
 @csrf_exempt
@@ -39,6 +36,12 @@ def sms_response(request):
     if request.method != 'POST':
         return HttpResponse(f'{request.method} request not supported', status=405)
 
+    # handle errors
+    if not from_number:
+        return HttpResponse(f'Missing From phone number', status=400)
+    if not to_number:
+        return HttpResponse(f'Missing To phone number', status=400)
+
     # parse message
     from_number = request.POST.get('From')
     to_number = request.POST.get('To')
@@ -47,12 +50,6 @@ def sms_response(request):
     status = request.POST.get('SmsStatus')
     message_status = MessageStatus(status=status, sid=sid)
     message_status.save()
-
-    # handle errors
-    if not from_number:
-        return HttpResponse(f'Missing From phone number', status=400)
-    if not to_number:
-        return HttpResponse(f'Missing To phone number', status=400)
 
     # map phone numbers to parents
     try:
@@ -78,13 +75,13 @@ def sms_response(request):
     message_in.save()
 
     # authenticate
-    if not body.strip().startswith(pin):
+    if not body.strip().startswith(settings.SMS_PIN):
         logger.warning('Incorect PIN')
         logger.warning(body)
         send_message(body="Incorrect PIN", to=from_number)
         return HttpResponse()
     else:
-        clean_body = body[len(pin):]
+        clean_body = body[len(settings.SMS_PIN):]
         resp = f"Your message has been sent: {clean_body}"
 
     # get all parent phone numbers
@@ -103,13 +100,13 @@ def sms_response(request):
 def send_message(body, to):
     twilio_message = client.messages.create(
         body=body,
-        from_=twilio_number,
+        from_=settings.TWILIO_NUMBER,
         to=to,
         status_callback='http://7cb8eb62.ngrok.io/sms/status',
     )
     logger.debug(f'Twilio message to {to} SID {twilio_message.sid}')
     message_out = Message(
-        from_phone_number=twilio_number,
+        from_phone_number=settings.TWILIO_NUMBER,
         to_phone_number=to,
         body=body,
         sid=twilio_message.sid,

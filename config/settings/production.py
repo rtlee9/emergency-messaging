@@ -196,3 +196,4 @@ sentry_sdk.init(dsn=SENTRY_DSN, integrations=[sentry_logging, DjangoIntegration(
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+TWILIO_NUMBER = env('TWILIO_NUMBER')
