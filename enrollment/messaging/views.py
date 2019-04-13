@@ -36,20 +36,24 @@ def sms_response(request):
     if request.method != 'POST':
         return HttpResponse(f'{request.method} request not supported', status=405)
 
-    # handle errors
-    if not from_number:
-        return HttpResponse(f'Missing From phone number', status=400)
-    if not to_number:
-        return HttpResponse(f'Missing To phone number', status=400)
-
     # parse message
     from_number = request.POST.get('From')
     to_number = request.POST.get('To')
     body = request.POST.get('Body')
     sid = request.POST.get('MessageSid')
     status = request.POST.get('SmsStatus')
-    message_status = MessageStatus(status=status, sid=sid)
-    message_status.save()
+
+    # handle errors
+    if not from_number:
+        return HttpResponse(f'Missing From phone number', status=400)
+    if not to_number:
+        return HttpResponse(f'Missing To phone number', status=400)
+    if not sid:
+        return HttpResponse(f'Missing SID', status=400)
+    if not status:
+        return HttpResponse(f'Missing SMS status', status=400)
+
+    MessageStatus(status=status, sid=sid).save()
 
     # map phone numbers to parents
     try:
@@ -76,12 +80,13 @@ def sms_response(request):
 
     # authenticate
     if not body.strip().startswith(settings.SMS_PIN):
-        logger.warning('Incorect PIN')
-        logger.warning(body)
+        logger.warning(f'Incorect PIN for SID {sid}')
+        MessageStatus(status='auth_fail', sid=sid).save()
         send_message(body="Incorrect PIN", to=from_number)
         return HttpResponse()
     else:
         clean_body = body[len(settings.SMS_PIN):]
+        MessageStatus(status='auth_pass', sid=sid).save()
         resp = f"Your message has been sent: {clean_body}"
 
     # get all parent phone numbers
@@ -93,6 +98,7 @@ def sms_response(request):
     for to_number in parent_phone_numbers:
         send_message(body=clean_body, to=to_number)
 
+    # send message and return empty response
     send_message(body=resp, to=from_number)
     return HttpResponse()
 
@@ -104,7 +110,7 @@ def send_message(body, to):
         to=to,
         status_callback='http://7cb8eb62.ngrok.io/sms/status',
     )
-    logger.debug(f'Twilio message to {to} SID {twilio_message.sid}')
+    logger.info(f'Twilio message to {to} SID {twilio_message.sid}')
     message_out = Message(
         from_phone_number=settings.TWILIO_NUMBER,
         to_phone_number=to,
