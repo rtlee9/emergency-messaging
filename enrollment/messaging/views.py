@@ -57,26 +57,12 @@ def sms_response(request):
 
     MessageStatus(status=status, sid=sid).save()
 
-    # map phone numbers to parents
-    try:
-        from_parent = Parent.objects.get(phone_number=from_number)
-    except Parent.DoesNotExist:
-        logger.warning(f'Parent not found for phone number {from_number}')
-        from_parent = None
-    try:
-        to_parent = Parent.objects.get(phone_number=to_number)
-    except Parent.DoesNotExist:
-        logger.warning(f'Parent not found for phone number {to_number}')
-        to_parent = None
-
     # create message object for persistence
     message_in = Message(
         sid=sid,
         body=body,
         from_phone_number=from_number,
         to_phone_number=to_number,
-        from_parent=from_parent,
-        to_parent=to_parent,
     )
     message_in.save()
 
