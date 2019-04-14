@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Messages</h2>
+
+  <div class="list-group">
+    {% for message in message_list %}
+    <div class="list-group-item">
+      <p>
+      From: {{ message.from_phone_number }}</br>
+      To: {{ message.to_phone_number }}</br>
+      Body: {{ message.body }}</br>
+      </p>
+      <a href="{% url 'messaging:message-detail' message.sid %}">
+  <button class="btn btn-outline-secondary">status</button>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock content %}
+

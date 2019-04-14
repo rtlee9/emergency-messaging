@@ -2,6 +2,8 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.urls import reverse
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -12,6 +14,19 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 client = Client(settings.TWILIO_SID, settings.TWILIO_TOKEN)
+
+
+class MessageListView(LoginRequiredMixin, ListView):
+    model = Message
+
+
+class MessageDetailView(LoginRequiredMixin, ListView):
+    model = MessageStatus
+    template_name = 'messaging/message_detail.html'
+
+    def get_queryset(self):
+        sid = self.kwargs['sid']
+        return MessageStatus.objects.filter(sid=sid)
 
 
 @csrf_exempt
