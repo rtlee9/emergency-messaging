@@ -85,7 +85,12 @@ def sms_response(request):
     if not body.strip().startswith(settings.SMS_PIN):
         logger.warning(f'Incorect PIN for SID {sid}')
         MessageStatus(status='auth_fail', sid=sid).save()
-        send_message(body="Incorrect PIN", to=from_number, callback=callback)
+        send_message(
+            body="Incorrect PIN",
+            to=from_number,
+            callback=callback,
+            parent=message_in,
+        )
         return HttpResponse()
     else:
         clean_body = body[len(settings.SMS_PIN):]
@@ -99,14 +104,24 @@ def sms_response(request):
     logger.debug(parent_phone_numbers)
 
     for to_number in parent_phone_numbers:
-        send_message(body=clean_body, to=to_number, callback=callback)
+        send_message(
+            body=clean_body,
+            to=to_number,
+            callback=callback,
+            parent=message_in,
+        )
 
     # send message and return empty response
-    send_message(body=resp, to=from_number, callback=callback)
+    send_message(
+        body=resp,
+        to=from_number,
+        callback=callback,
+        parent=message_in,
+    )
     return HttpResponse()
 
 
-def send_message(body, to, callback=None):
+def send_message(body, to, callback=None, parent=None):
     twilio_message = client.messages.create(
         body=body,
         from_=settings.TWILIO_NUMBER,
@@ -119,5 +134,6 @@ def send_message(body, to, callback=None):
         to_phone_number=to,
         body=body,
         sid=twilio_message.sid,
+        parent=parent
     )
     message_out.save()

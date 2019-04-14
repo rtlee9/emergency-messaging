@@ -7,6 +7,7 @@ class Message(models.Model):
     from_phone_number = PhoneNumberField()
     to_phone_number = PhoneNumberField()
     body = models.CharField(max_length=160)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f'''
