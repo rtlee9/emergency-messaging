@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}Classrooms{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2>Classrooms</h2>
+
+  <div class="list-group">
+    {% for classroom in classroom_list %}
+    <div class="list-group-item">
+      <h5 class="list-group-item-heading">{{ classroom.name }}</h5>
+      <a href="{% url 'students:classroom-detail' classroom.pk %}">
+  <button class="btn btn-outline-secondary">View</button>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="control-group">
+    <div class="controls">
+      <a href="{% url 'students:classroom-add' %}"><button class="btn btn-outline-primary">Add classroom</button></a>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}

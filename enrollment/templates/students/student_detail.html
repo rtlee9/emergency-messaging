@@ -13,6 +13,9 @@
       {% if object.first_name %}
         <p>{{ object.first_name }}</p>
       {% endif %}
+      {% if object.classroom %}
+      <p>Classroom: <a href="{% url 'students:classroom-detail' object.classroom.pk %}">{{ object.classroom.name }}</a></p>
+      {% endif %}
       {% if object.parent_set.all %}
       <h3>Parents:</h3>
       {% for parent in object.parent_set.all %}

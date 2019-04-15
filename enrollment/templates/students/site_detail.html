@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Site: {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+      <h2>{{ object }}</h2>
+      {% if object.site %}
+      <p>
+      {{ object.site }}
+      </p>
+      {% endif %}
+      {% if object.classroom_set.all %}
+      <h4>Classrooms</h4>
+      {% for classroom in object.classroom_set.all %}
+      <p><a href="{% url 'students:classroom-detail' classroom.pk %}">{{ classroom.name }}</a></p>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+<!-- Action buttons -->
+<div class="row">
+  <div class="col-sm-12">
+    <a class="btn btn-outline-primary" href="{% url 'students:site-update' object.pk %}" role="button">Edit</a>
+    <a class="btn btn-outline-danger" href="{% url 'students:site-delete' object.pk %}" role="button">Delete</a>
+  </div>
+</div>
+<!-- End Action buttons -->
+
+</div>
+{% endblock content %}
+

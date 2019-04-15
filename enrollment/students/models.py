@@ -41,8 +41,36 @@ class Address(models.Model):
         return reverse('students:address-detail', kwargs={'pk': self.pk})
 
 
+class Site(models.Model):
+    name = models.CharField(max_length=128)
+
+    def get_absolute_url(self):
+        return reverse('students:site-detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return f'Site {self.name}'
+
+    class Meta:
+        ordering = ['name']
+
+
+class Classroom(models.Model):
+    name = models.CharField(max_length=128)
+    site = models.ForeignKey(Site, blank=True, null=True, on_delete=models.SET_NULL)
+
+    def get_absolute_url(self):
+        return reverse('students:classroom-detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return f'Classroom {self.name}'
+
+    class Meta:
+        ordering = ['name']
+
+
 class Student(Person):
     birth_date = models.DateField()
+    classroom = models.ForeignKey(Classroom, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['first_name', 'last_name', 'birth_date']
@@ -59,15 +87,3 @@ class Parent(Person):
 
     def get_absolute_url(self):
         return reverse('students:parent-detail', kwargs={'pk': self.pk})
-
-
-class ClassRoom(models.Model):
-    name = models.CharField(max_length=128)
-    members = models.ManyToManyField(Student, through='Membership')
-
-
-class Membership(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
-    date_joined = models.DateField()
-    tution = models.PositiveIntegerField(null=True, blank=True)

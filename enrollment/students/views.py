@@ -22,12 +22,12 @@ class StudentListView(LoginRequiredMixin, ListView):
 
 class StudentCreate(LoginRequiredMixin, CreateView):
     model = models.Student
-    fields = ['first_name', 'last_name', 'birth_date']
+    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
 
 
 class StudentUpdate(LoginRequiredMixin, UpdateView):
     model = models.Student
-    fields = ['first_name', 'last_name', 'birth_date']
+    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
 
 
 class StudentDelete(LoginRequiredMixin, DeleteView):
@@ -48,22 +48,22 @@ class AddressCreate(LoginRequiredMixin, CreateView):
     fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
 
     def form_valid(self, form):
-        """ If coming from parent creation then associate this address with
-        that parent and return parent view.
+        """ If coming from classroom creation then associate this address with
+        that classroom and return classroom view.
         """
-        parent_id = self.request.GET.get('parent_id')
-        if parent_id:
+        classroom_id = self.request.GET.get('classroom_id')
+        if classroom_id:
             try:
-                parent = models.Parent.objects.get(pk=parent_id)
-            except models.Parent.DoesNotExist:
-                logger.warning(f'Parent ID {parent_id} does not exist ({self})')
+                classroom = models.Site.objects.get(pk=classroom_id)
+            except models.Site.DoesNotExist:
+                logger.warning(f'Site ID {classroom_id} does not exist ({self})')
                 return super().form_valid(form)
-            logger.debug(f'Parent for {self} is {parent}')
+            logger.debug(f'Site for {self} is {classroom}')
             logger.debug(form.instance)
             response = super().form_valid(form)
-            parent.address = form.instance
-            parent.save(update_fields=['address'])
-            redirect_url_base = reverse_lazy('students:parent-detail', kwargs={'pk': parent_id})
+            classroom.address = form.instance
+            classroom.save(update_fields=['address'])
+            redirect_url_base = reverse_lazy('students:classroom-detail', kwargs={'pk': classroom_id})
             return HttpResponseRedirect(f'{redirect_url_base}?address_id={form.instance.pk}')
         return super().form_valid(form)
 
@@ -120,3 +120,49 @@ class ParentUpdate(LoginRequiredMixin, UpdateView):
 class ParentDelete(LoginRequiredMixin, DeleteView):
     model = models.Parent
     success_url = reverse_lazy('students:parent-list')
+
+
+class ClassroomDetailView(LoginRequiredMixin, DetailView):
+    model = models.Classroom
+
+
+class ClassroomListView(LoginRequiredMixin, ListView):
+    model = models.Classroom
+
+
+class ClassroomCreate(LoginRequiredMixin, CreateView):
+    model = models.Classroom
+    fields = ['name', 'site']
+
+
+class ClassroomUpdate(LoginRequiredMixin, UpdateView):
+    model = models.Classroom
+    fields = ['name', 'site']
+
+
+class ClassroomDelete(LoginRequiredMixin, DeleteView):
+    model = models.Classroom
+    success_url = reverse_lazy('students:classroom-list')
+
+
+class SiteDetailView(LoginRequiredMixin, DetailView):
+    model = models.Site
+
+
+class SiteListView(LoginRequiredMixin, ListView):
+    model = models.Site
+
+
+class SiteCreate(LoginRequiredMixin, CreateView):
+    model = models.Site
+    fields = ['name']
+
+
+class SiteUpdate(LoginRequiredMixin, UpdateView):
+    model = models.Site
+    fields = ['name']
+
+
+class SiteDelete(LoginRequiredMixin, DeleteView):
+    model = models.Site
+    success_url = reverse_lazy('students:site-list')
