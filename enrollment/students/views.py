@@ -8,42 +8,43 @@ from django.views.generic import DetailView, ListView
 from django.http import HttpResponse, HttpResponseRedirect
 
 from enrollment.students import models
+from enrollment.users.mixins import StaffRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
-class StudentDetailView(LoginRequiredMixin, DetailView):
+class StudentDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = models.Student
 
 
-class StudentListView(LoginRequiredMixin, ListView):
+class StudentListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = models.Student
 
 
-class StudentCreate(LoginRequiredMixin, CreateView):
-    model = models.Student
-    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
-
-
-class StudentUpdate(LoginRequiredMixin, UpdateView):
+class StudentCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Student
     fields = ['first_name', 'last_name', 'birth_date', 'classroom']
 
 
-class StudentDelete(LoginRequiredMixin, DeleteView):
+class StudentUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    model = models.Student
+    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
+
+
+class StudentDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = models.Student
     success_url = reverse_lazy('students:student-list')
 
 
-class AddressDetailView(LoginRequiredMixin, DetailView):
+class AddressDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = models.Address
 
 
-class AddressListView(LoginRequiredMixin, ListView):
+class AddressListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = models.Address
 
 
-class AddressCreate(LoginRequiredMixin, CreateView):
+class AddressCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Address
     fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
 
@@ -68,25 +69,25 @@ class AddressCreate(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class AddressUpdate(LoginRequiredMixin, UpdateView):
+class AddressUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     model = models.Address
     fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
 
 
-class AddressDelete(LoginRequiredMixin, DeleteView):
+class AddressDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = models.Address
     success_url = reverse_lazy('students:address-list')
 
 
-class ParentDetailView(LoginRequiredMixin, DetailView):
+class ParentDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = models.Parent
 
 
-class ParentListView(LoginRequiredMixin, ListView):
+class ParentListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = models.Parent
 
 
-class ParentCreate(LoginRequiredMixin, CreateView):
+class ParentCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Parent
     fields = ['first_name', 'last_name', 'email', 'phone_number', 'students', 'address']
 
@@ -107,7 +108,7 @@ class ParentCreate(LoginRequiredMixin, CreateView):
             return response
 
 
-class ParentUpdate(LoginRequiredMixin, UpdateView):
+class ParentUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     model = models.Parent
     fields = ['first_name', 'last_name', 'email', 'phone_number', 'students', 'address']
 
@@ -117,52 +118,52 @@ class ParentUpdate(LoginRequiredMixin, UpdateView):
         }
 
 
-class ParentDelete(LoginRequiredMixin, DeleteView):
+class ParentDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = models.Parent
     success_url = reverse_lazy('students:parent-list')
 
 
-class ClassroomDetailView(LoginRequiredMixin, DetailView):
+class ClassroomDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = models.Classroom
 
 
-class ClassroomListView(LoginRequiredMixin, ListView):
+class ClassroomListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = models.Classroom
 
 
-class ClassroomCreate(LoginRequiredMixin, CreateView):
-    model = models.Classroom
-    fields = ['name', 'site']
-
-
-class ClassroomUpdate(LoginRequiredMixin, UpdateView):
+class ClassroomCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Classroom
     fields = ['name', 'site']
 
 
-class ClassroomDelete(LoginRequiredMixin, DeleteView):
+class ClassroomUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    model = models.Classroom
+    fields = ['name', 'site']
+
+
+class ClassroomDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = models.Classroom
     success_url = reverse_lazy('students:classroom-list')
 
 
-class SiteDetailView(LoginRequiredMixin, DetailView):
+class SiteDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = models.Site
 
 
-class SiteListView(LoginRequiredMixin, ListView):
+class SiteListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = models.Site
 
 
-class SiteCreate(LoginRequiredMixin, CreateView):
-    model = models.Site
-    fields = ['name']
-
-
-class SiteUpdate(LoginRequiredMixin, UpdateView):
+class SiteCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Site
     fields = ['name']
 
 
-class SiteDelete(LoginRequiredMixin, DeleteView):
+class SiteUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
+    model = models.Site
+    fields = ['name']
+
+
+class SiteDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
     model = models.Site
     success_url = reverse_lazy('students:site-list')

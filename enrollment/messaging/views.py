@@ -11,6 +11,7 @@ from twilio.rest import Client
 
 from enrollment.students.models import Parent
 from enrollment.messaging.models import Message, MessageStatus
+from enrollment.users.mixins import StaffRequiredMixin
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -22,14 +23,14 @@ def get_item(dictionary, key):
     return dictionary.get(key)
 
 
-class MessageListView(LoginRequiredMixin, ListView):
+class MessageListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = Message
 
     def get_queryset(self):
         return Message.objects.filter(msg_type=Message.INBOUND)
 
 
-class MessageDetailView(LoginRequiredMixin, ListView):
+class MessageDetailView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = MessageStatus
     template_name = 'messaging/message_detail.html'
 
