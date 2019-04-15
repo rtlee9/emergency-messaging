@@ -8,6 +8,13 @@ class Message(models.Model):
     to_phone_number = PhoneNumberField()
     body = models.CharField(max_length=160)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
+    msg_type = models.CharField(max_length=32)
+
+    # constants
+    INBOUND = 'inbound'
+    OUTBOUND = 'outbound'
+    CONFIRMATION = 'confirmation'
+    AUTH_FAIL = 'auth_fail'
 
     def __str__(self):
         return f'''
@@ -18,7 +25,7 @@ class Message(models.Model):
 
 
 class MessageStatus(models.Model):
-    status = models.CharField(max_length=12, null=True)
+    status = models.CharField(max_length=12, null=True)  # TODO: validate status
     datetime = models.DateTimeField(auto_now_add=True)
     sid = models.CharField(max_length=34)
 

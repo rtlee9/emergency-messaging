@@ -26,7 +26,7 @@ class MessageListView(LoginRequiredMixin, ListView):
     model = Message
 
     def get_queryset(self):
-        return Message.objects.filter(parent=None)
+        return Message.objects.filter(msg_type=Message.INBOUND)
 
 
 class MessageDetailView(LoginRequiredMixin, ListView):
@@ -104,6 +104,7 @@ def sms_response(request):
         body=body,
         from_phone_number=from_number,
         to_phone_number=to_number,
+        msg_type=Message.INBOUND,
     )
     message_in.save()
 
@@ -116,6 +117,7 @@ def sms_response(request):
             to=from_number,
             callback=callback,
             parent=message_in,
+            msg_type=Message.AUTH_FAIL,
         )
         return HttpResponse()
     else:
@@ -143,11 +145,12 @@ def sms_response(request):
         to=from_number,
         callback=callback,
         parent=message_in,
+        msg_type=Message.CONFIRMATION,
     )
     return HttpResponse()
 
 
-def send_message(body, to, callback=None, parent=None):
+def send_message(body, to, callback=None, parent=None, msg_type=Message.OUTBOUND):
     twilio_message = client.messages.create(
         body=body,
         from_=settings.TWILIO_NUMBER,
@@ -160,6 +163,7 @@ def send_message(body, to, callback=None, parent=None):
         to_phone_number=to,
         body=body,
         sid=twilio_message.sid,
-        parent=parent
+        parent=parent,
+        msg_type=msg_type,
     )
     message_out.save()
