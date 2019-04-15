@@ -22,5 +22,8 @@ class MessageStatus(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     sid = models.CharField(max_length=34)
 
+    class Meta:
+        get_latest_by = 'datetime'
+
     def __str__(self):
         return f'{self.sid} was {self.status} on {self.datetime}'

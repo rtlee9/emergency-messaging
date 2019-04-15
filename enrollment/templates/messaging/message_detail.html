@@ -4,8 +4,15 @@
 
 {% block content %}
 <div class="container">
-  <h2>Messages</h2>
+  <h2>Message</h2>
+    <p>
+    From: {{ message_object.from_phone_number }}</br>
+    To: {{ message_object.to_phone_number }}</br>
+    Body: {{ message_object.body }}</br>
+    Status: {{ latest_status.status }} on {{ latest_status.datetime }}
+    </p>
 
+  <h2>History</h2>
   <div class="list-group">
     {% for message_status in messagestatus_list %}
     <p>
@@ -14,5 +21,17 @@
     {% endfor %}
   </div>
 
+  {% if children_messages %}
+  <h2>Children</h2>
+  {% for message in children_messages %}
+  <p>
+  {% with status=children_statuses|get_item:message.sid  %}
+  <a href="{% url 'messaging:message-detail' message.sid %}">Relayed</a> to {{ message.to_phone_number }}{% if status %}: {{ status.status }} on {{ status.datetime }}{% endif %}
+  {% endwith %}
+  </p>
+  {% endfor %}
+  {% endif %}
+
 </div>
 {% endblock content %}
+

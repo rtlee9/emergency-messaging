@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.template.defaulttags import register
 
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -16,8 +17,16 @@ logger = logging.getLogger(__name__)
 client = Client(settings.TWILIO_SID, settings.TWILIO_TOKEN)
 
 
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
+
 class MessageListView(LoginRequiredMixin, ListView):
     model = Message
+
+    def get_queryset(self):
+        return Message.objects.filter(parent=None)
 
 
 class MessageDetailView(LoginRequiredMixin, ListView):
@@ -27,6 +36,23 @@ class MessageDetailView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         sid = self.kwargs['sid']
         return MessageStatus.objects.filter(sid=sid)
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['message_object'] = Message.objects.\
+            get(sid=self.kwargs['sid'])
+        context['latest_status'] = self.get_queryset().latest()
+        context['children_messages'] = Message.objects.\
+            filter(parent_id=self.kwargs['sid'])
+        children_statuses = MessageStatus.objects.\
+            filter(sid__in=context['children_messages'].values_list('sid', flat=True)).\
+            order_by('sid', '-datetime').\
+            distinct('sid')
+        context['children_statuses'] = {
+            status.sid: status
+            for status in children_statuses
+        }
+        return context
 
 
 @csrf_exempt
