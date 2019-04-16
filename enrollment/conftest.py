@@ -3,6 +3,7 @@ from django.conf import settings
 from django.test import RequestFactory
 
 from enrollment.users.tests.factories import UserFactory
+from enrollment.messaging.tests.factories import MessageFactory
 
 
 @pytest.fixture(autouse=True)
@@ -18,3 +19,8 @@ def user() -> settings.AUTH_USER_MODEL:
 @pytest.fixture
 def request_factory() -> RequestFactory:
     return RequestFactory()
+
+
+@pytest.fixture
+def message() -> MessageFactory:
+    return MessageFactory()
