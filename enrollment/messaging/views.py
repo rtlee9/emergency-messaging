@@ -8,6 +8,8 @@ from django.template.defaulttags import register
 
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
+import pytz
+from datetime import datetime as dt
 
 from enrollment.students.models import Parent
 from enrollment.messaging.models import Message, MessageStatus
@@ -74,7 +76,7 @@ def sms_status(request):
 
 @csrf_exempt
 def sms_response(request):
-    # only hanlde POSt requests
+    # only hanlde POST requests
     logger.debug(request.POST)
     if request.method != 'POST':
         return HttpResponse(f'{request.method} request not supported', status=405)
@@ -109,8 +111,30 @@ def sms_response(request):
     )
     message_in.save()
 
+    # if recently authenticated then can skip auth this time
+    msgs = Message.objects.\
+        filter(from_phone_number=from_number).\
+        values_list('sid', flat=True)
+    try:
+        last_pass = MessageStatus.objects.\
+            filter(sid__in=msgs, status='auth_pass').\
+            latest()
+        logger.debug(f'Last successfal authentication: {last_pass}')
+        last_pass = last_pass.datetime
+        now = dt.utcnow().replace(tzinfo=pytz.utc)
+        delta = now - last_pass
+        auth_required = delta.seconds > settings.AUTH_SECONDS
+        if auth_required:
+            logger.debug(f'{delta.seconds:,.0f} seconds since last successfull authentication.')
+        else:
+            logger.info(f'Skipping authentication: {delta.seconds:,.0f} seconds since last successfull authentication.')
+            MessageStatus(status='auth_skip', sid=sid).save()
+    except MessageStatus.DoesNotExist:
+        logger.info('No previous successfull authentications (auth required)')
+        auth_required = True
+
     # authenticate
-    if not body.strip().startswith(settings.SMS_PIN):
+    if auth_required and not body.strip().startswith(settings.SMS_PIN):
         logger.warning(f'Incorect PIN for SID {sid}')
         MessageStatus(status='auth_fail', sid=sid).save()
         send_message(
@@ -123,14 +147,14 @@ def sms_response(request):
         return HttpResponse()
     else:
         clean_body = body[len(settings.SMS_PIN):]
-        MessageStatus(status='auth_pass', sid=sid).save()
+        if auth_required:
+            MessageStatus(status='auth_pass', sid=sid).save()
         resp = f"Your message has been sent: {clean_body}"
 
     # get all parent phone numbers
     parent_phone_numbers = Parent.objects.\
         values_list('phone_number', flat=True).\
         distinct('phone_number')
-    logger.debug(parent_phone_numbers)
 
     for to_number in parent_phone_numbers:
         send_message(
