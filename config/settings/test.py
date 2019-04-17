@@ -27,6 +27,35 @@ CACHES = {
     }
 }
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        }
+    },
+    'loggers': {
+        'enrollment': {
+            'level': 'DEBUG',
+            "handlers": ["console"],
+            'propagate': True,
+        },
+        "django.db.backends": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+    },
+}
+
 # PASSWORDS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#password-hashers
