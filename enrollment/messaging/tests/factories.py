@@ -1,4 +1,4 @@
-from factory import DjangoModelFactory, Faker
+from factory import DjangoModelFactory, Faker, fuzzy
 from enrollment.messaging import models
 from faker.providers import phone_number
 
@@ -18,3 +18,13 @@ class MessageFactory(DjangoModelFactory):
     class Meta:
         model = models.Message
         django_get_or_create = ["sid"]
+
+
+class MessageStatusFactory(DjangoModelFactory):
+
+    sid = Faker('password', length=34, special_chars=False)
+    datetime = Faker('date_time')
+    status = fuzzy.FuzzyChoice(models.MessageStatus.STATUS_CHOICES)
+
+    class Meta:
+        model = models.MessageStatus

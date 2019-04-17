@@ -117,7 +117,7 @@ def sms_response(request):
         values_list('sid', flat=True)
     try:
         last_pass = MessageStatus.objects.\
-            filter(sid__in=msgs, status='auth_pass').\
+            filter(sid__in=msgs, status=MessageStatus.AUTH_PASS).\
             latest()
         logger.debug(f'Last successfal authentication: {last_pass}')
         last_pass = last_pass.datetime
@@ -128,7 +128,7 @@ def sms_response(request):
             logger.debug(f'{delta.seconds:,.0f} seconds since last successfull authentication.')
         else:
             logger.info(f'Skipping authentication: {delta.seconds:,.0f} seconds since last successfull authentication.')
-            MessageStatus(status='auth_skip', sid=sid).save()
+            MessageStatus(status=MessageStatus.AUTH_SKIP, sid=sid).save()
     except MessageStatus.DoesNotExist:
         logger.info('No previous successfull authentications (auth required)')
         auth_required = True
@@ -136,19 +136,19 @@ def sms_response(request):
     # authenticate
     if auth_required and not body.strip().startswith(settings.SMS_PIN):
         logger.warning(f'Incorect PIN for SID {sid}')
-        MessageStatus(status='auth_fail', sid=sid).save()
+        MessageStatus(status=MessageStatus.AUTH_FAIL, sid=sid).save()
         send_message(
             body="Incorrect PIN",
             to=from_number,
             callback=callback,
             parent=message_in,
-            msg_type=Message.AUTH_FAIL,
+            msg_type=MessageStatus.AUTH_FAIL,
         )
         return HttpResponse()
     else:
         clean_body = body[len(settings.SMS_PIN):]
         if auth_required:
-            MessageStatus(status='auth_pass', sid=sid).save()
+            MessageStatus(status=MessageStatus.AUTH_PASS, sid=sid).save()
         resp = f"Your message has been sent: {clean_body}"
 
     # get all parent phone numbers
