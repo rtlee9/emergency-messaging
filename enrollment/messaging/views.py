@@ -149,7 +149,7 @@ def sms_response(request):
         clean_body = body[len(settings.SMS_PIN):]
         if auth_required:
             MessageStatus(status=MessageStatus.AUTH_PASS, sid=sid).save()
-        resp = f"Your message has been sent: {clean_body}"
+        resp = f"Your message has been sent"
 
     # get all parent phone numbers
     parent_phone_numbers = Parent.objects.\
