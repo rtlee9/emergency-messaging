@@ -1,8 +1,12 @@
 import pytest
 from django.conf import settings
 from django.test import RequestFactory
+from random import randint
+import phonenumbers
 
 from enrollment.messaging import views, models
+from enrollment.students.tests.factories import ParentFactory
+from enrollment.students.models import Parent
 from .factories import MessageFactory
 
 pytestmark = pytest.mark.django_db
@@ -97,21 +101,33 @@ class TestSmsView:
         assert response.status_code == 400
         assert 'phone number' in str(response.content).lower()
 
-    def test_correct_pin(
+    def test_good_message(
         self,
         message: models.Message,
         message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
         msg_og = message.body
-        message.body = settings.SMS_PIN + msg_og[:-len(settings.SMS_PIN)]
+        msg_og_trunc = msg_og[:-len(settings.SMS_PIN)]
+        message.body = settings.SMS_PIN + msg_og_trunc
         view = views.sms_response
+        # create batch of parents
+        n = randint(2, 30)
+        parents = ParentFactory.create_batch(size=n)
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = view(request)
         self._test_empty_response(response)
         # check test client for confirmation message
         msgs = views.client.messages.created
-        assert len(msgs) == 1
-        assert msgs[0]['to'] == message.from_phone_number
-        assert msgs[0]['body'].lower().startswith('your message has been sent')
+        assert len(msgs) == 1 + n
+        # first message is confirmation
+        assert msgs[-1]['to'] == phonenumbers.format_number(
+            message.from_phone_number, phonenumbers.PhoneNumberFormat.E164)
+        assert msgs[-1]['body'].lower().startswith('your message has been sent')
+        for i in range(n - 1):
+            msg = msgs[i]
+            parent = Parent.objects.get(phone_number=msg['to'])
+            assert msg['body'] == msg_og_trunc
+            assert msg['to'] == phonenumbers.format_number(
+                parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
