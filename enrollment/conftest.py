@@ -4,6 +4,7 @@ from django.test import RequestFactory
 
 from enrollment.users.tests.factories import UserFactory
 from enrollment.messaging.tests.factories import MessageFactory, MessageStatusFactory
+from enrollment.students.tests.factories import ParentFactory
 
 
 @pytest.fixture(autouse=True)
@@ -29,3 +30,8 @@ def message() -> MessageFactory:
 @pytest.fixture
 def message_status() -> MessageStatusFactory:
     return MessageStatusFactory()
+
+
+@pytest.fixture
+def parent() -> ParentFactory:
+    return ParentFactory()
