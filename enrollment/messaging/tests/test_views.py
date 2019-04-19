@@ -65,6 +65,7 @@ class TestSmsView:
 
     @pytest.fixture(autouse=True)
     def setup(self):
+        self.view = views.sms_response
         views.client = TwilioTestClient(
             settings.TWILIO_SID, settings.TWILIO_TOKEN)
 
@@ -74,10 +75,9 @@ class TestSmsView:
         message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
-        view = views.sms_response
         request = request_factory.post(
             "/sms/", self._construct_data(message))
-        response = view(request)
+        response = self.view(request)
         # expecting empty repsone
         assert response.status_code == 200
         assert not response.content
@@ -93,13 +93,23 @@ class TestSmsView:
         message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
-        view = views.sms_response
         data = self._construct_data(message)
         data.pop('From')
         request = request_factory.post("/sms/", data)
-        response = view(request)
+        response = self.view(request)
         assert response.status_code == 400
         assert 'phone number' in str(response.content).lower()
+
+    def test_get_request(
+        self,
+        message: models.Message,
+        message_status: models.MessageStatus,
+        request_factory: RequestFactory,
+    ):
+        request = request_factory.get("/sms/")
+        response = self.view(request)
+        assert response.status_code == 405
+        assert 'not supported' in str(response.content).lower()
 
     def test_good_message(
         self,
@@ -110,13 +120,12 @@ class TestSmsView:
         msg_og = message.body
         msg_og_trunc = msg_og[:-len(settings.SMS_PIN)]
         message.body = settings.SMS_PIN + msg_og_trunc
-        view = views.sms_response
         # create batch of parents
         n = randint(2, 30)
         parents = ParentFactory.create_batch(size=n)
         request = request_factory.post(
             "/sms/", self._construct_data(message))
-        response = view(request)
+        response = self.view(request)
         self._test_empty_response(response)
         # check test client for confirmation message
         msgs = views.client.messages.created
