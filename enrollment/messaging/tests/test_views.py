@@ -3,6 +3,7 @@ from django.conf import settings
 from django.test import RequestFactory
 from random import randint
 import phonenumbers
+import time
 
 from enrollment.messaging import views, models
 from enrollment.students.tests.factories import ParentFactory
@@ -120,23 +121,63 @@ class TestSmsView:
         msg_og = message.body
         msg_og_trunc = msg_og[:-len(settings.SMS_PIN)]
         message.body = settings.SMS_PIN + msg_og_trunc
+
         # create batch of parents
-        n = randint(2, 30)
+        n = randint(2, 10)
         parents = ParentFactory.create_batch(size=n)
+
+        # send request
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = self.view(request)
         self._test_empty_response(response)
+
         # check test client for confirmation message
         msgs = views.client.messages.created
         assert len(msgs) == 1 + n
-        # first message is confirmation
+        # last message is confirmation
         assert msgs[-1]['to'] == phonenumbers.format_number(
             message.from_phone_number, phonenumbers.PhoneNumberFormat.E164)
         assert msgs[-1]['body'].lower().startswith('your message has been sent')
+        # check messages to all parents
         for i in range(n - 1):
             msg = msgs[i]
             parent = Parent.objects.get(phone_number=msg['to'])
             assert msg['body'] == msg_og_trunc
             assert msg['to'] == phonenumbers.format_number(
                 parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
+
+        # subsequent request shouldn't require PIN
+        message.body = msg_og
+        request = request_factory.post(
+            "/sms/", self._construct_data(message))
+        response = self.view(request)
+        self._test_empty_response(response)
+        # check test client for confirmation message
+        msgs = views.client.messages.created
+        assert len(msgs) == 2 * (1 + n)
+        # last message is confirmation
+        assert msgs[-1]['to'] == phonenumbers.format_number(
+            message.from_phone_number, phonenumbers.PhoneNumberFormat.E164)
+        assert msgs[-1]['body'].lower().startswith('your message has been sent')
+        # check messages to all parents
+        for i in range(n + 2, 2 * (1 + n) - 1):
+            msg = msgs[i]
+            parent = Parent.objects.get(phone_number=msg['to'])
+            assert msg['body'] == msg_og
+            assert msg['to'] == phonenumbers.format_number(
+                parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
+
+        # subsequent request should require PIN if after timeout
+        time.sleep(settings.AUTH_SECONDS + 1)
+        message.body = msg_og
+        request = request_factory.post(
+            "/sms/", self._construct_data(message))
+        response = self.view(request)
+        self._test_empty_response(response)
+        # check test client for confirmation message
+        msgs = views.client.messages.created
+        assert len(msgs) == 2 * (1 + n) + 1
+        # last message is confirmation
+        assert msgs[-1]['to'] == message.from_phone_number
+        assert msgs[-1]['body'] == 'Incorrect PIN'

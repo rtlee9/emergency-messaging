@@ -123,18 +123,25 @@ def sms_response(request):
         last_pass = last_pass.datetime
         now = dt.utcnow().replace(tzinfo=pytz.utc)
         delta = now - last_pass
+        logger.info(f'''
+        Skipping authentication: {delta.seconds:,.1f} seconds since last successfull authentication
+        ({settings.AUTH_SECONDS:.1f} seconds required).''')
+        MessageStatus(status=MessageStatus.AUTH_SKIP, sid=sid).save()
         auth_required = delta.seconds > settings.AUTH_SECONDS
         if auth_required:
-            logger.debug(f'{delta.seconds:,.0f} seconds since last successfull authentication.')
-        else:
-            logger.info(f'Skipping authentication: {delta.seconds:,.0f} seconds since last successfull authentication.')
-            MessageStatus(status=MessageStatus.AUTH_SKIP, sid=sid).save()
+            logger.debug(f'{delta.seconds:,.1f} seconds since last successfull authentication.')
     except MessageStatus.DoesNotExist:
         logger.info('No previous successfull authentications (auth required)')
         auth_required = True
 
-    # authenticate
-    if auth_required and not body.strip().startswith(settings.SMS_PIN):
+    if not auth_required:
+        # no auth required
+        logger.debug('Skipping authentication')
+        MessageStatus(status=MessageStatus.AUTH_SKIP, sid=sid).save()
+        clean_body = body
+        resp = f"Your message has been sent"
+    elif not body.strip().startswith(settings.SMS_PIN):
+        # auth fail
         logger.warning(f'Incorect PIN for SID {sid}')
         MessageStatus(status=MessageStatus.AUTH_FAIL, sid=sid).save()
         send_message(
@@ -146,6 +153,7 @@ def sms_response(request):
         )
         return HttpResponse()
     else:
+        # auth pass
         clean_body = body[len(settings.SMS_PIN):]
         if auth_required:
             MessageStatus(status=MessageStatus.AUTH_PASS, sid=sid).save()
