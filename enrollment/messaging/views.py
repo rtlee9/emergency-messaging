@@ -11,7 +11,7 @@ from twilio.rest import Client
 import pytz
 from datetime import datetime as dt
 
-from enrollment.students.models import Parent
+from enrollment.students.models import Parent, Site
 from enrollment.messaging.models import Message, MessageStatus
 from enrollment.users.mixins import StaffRequiredMixin
 from django.conf import settings
@@ -159,7 +159,55 @@ def sms_response(request):
             MessageStatus(status=MessageStatus.AUTH_PASS, sid=sid).save()
         resp = f"Your message has been sent"
 
+    # prompt for site if not done recently
+    sites = Site.objects.all()
+    try:
+        # get all messages system sent to this message's sender
+        msgs_out = Message.objects.filter(
+            to_phone_number=from_number, msg_type=Message.SITE_PROMPT)
+        # get the last of those messages to be delivered successfully
+        last_out_status = MessageStatus.objects.\
+            filter(sid__in=msgs_out.values_list('sid', flat=True), status=MessageStatus.TWILIO_DELIVERED).\
+            latest()
+        last_out = msgs_out.get(sid=last_out_status.sid)
+        now = dt.utcnow().replace(tzinfo=pytz.utc)
+        delta = now - last_out_status.datetime
+        if delta.seconds < 60 * 3:  # TODO: move static numbers to config
+            # last message was a site prompt and was recent
+            site_prompt_required = False
+            # this message is actually a response to the previous prompt
+            message_in.parent = last_out
+            message_in.save()
+        else:
+            site_prompt_required = True
+            logger.debug(last_out_status.status)
+            logger.debug('NEED GROUP PROMPT')
+    except (Message.DoesNotExist, MessageStatus.DoesNotExist):
+        site_prompt_required = True
+        logger.debug('NEED GROUP PROMPT (recent message not found)')
+        pass
+
+    if site_prompt_required:
+        # get list of sites
+        sites = Site.objects.all()
+        body = 'Please select a site to send your message to:'
+        for site in sites:
+            body += f'\n[{site.pk}]: {site.name[:10]}'  # TODO: better templating, sequential index
+        # issue site prompt
+        send_message(
+            body=body,
+            to=from_number,
+            callback=callback,
+            parent=message_in,
+            msg_type=Message.SITE_PROMPT,
+        )
+        return HttpResponse()
+
+    # parse site
+    clean_body = last_out.parent.body[len(settings.SMS_PIN):]
+
     # get all parent phone numbers
+    # TODO: filter parents related to this site
     parent_phone_numbers = Parent.objects.\
         values_list('phone_number', flat=True).\
         distinct('phone_number')
@@ -190,7 +238,7 @@ def send_message(body, to, callback=None, parent=None, msg_type=Message.OUTBOUND
         to=to,
         status_callback=callback,
     )
-    logger.info(f'Twilio message to {to} SID {twilio_message.sid}')
+    logger.info(f'Twilio message to {to} SID {twilio_message.sid} {body}')
     message_out = Message(
         from_phone_number=settings.TWILIO_NUMBER,
         to_phone_number=to,

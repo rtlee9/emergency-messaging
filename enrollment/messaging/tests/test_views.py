@@ -6,7 +6,7 @@ import phonenumbers
 import time
 
 from enrollment.messaging import views, models
-from enrollment.students.tests.factories import ParentFactory
+from enrollment.students.tests.factories import ParentFactory, SiteFactory
 from enrollment.students.models import Parent
 from .factories import MessageFactory
 
@@ -33,11 +33,16 @@ class TwillioTestClientMessages:
             'body': body,
             'status_callback': status_callback,
         })
-        return TwilioTestMessage(
+        message = TwilioTestMessage(
             body=body,
             from_phone_number=from_,
             to_phone_number=to,
         )
+        # TODO: make callback
+        # TEMP: add statuses
+        message_status = models.MessageStatus(status=models.MessageStatus.TWILIO_SENT, sid=message.sid).save()
+        message_status = models.MessageStatus(status=models.MessageStatus.TWILIO_DELIVERED, sid=message.sid).save()
+        return message
 
 
 class TwilioTestMessage(object):
@@ -126,7 +131,26 @@ class TestSmsView:
         n = randint(2, 10)
         parents = ParentFactory.create_batch(size=n)
 
+        # create batch of sites
+        ns = randint(2, 4)
+        sites = SiteFactory.create_batch(size=ns)
+
         # send request
+        request = request_factory.post(
+            "/sms/", self._construct_data(message))
+        response = self.view(request)
+        self._test_empty_response(response)
+
+        # check for site prompt
+        msgs = views.client.messages.created
+        assert len(msgs) == 1
+        assert msgs[0]['body'].startswith('Please select a site')
+        assert len(msgs[0]['body'].split('\n')) == ns + 1
+        views.client.messages.created = []
+
+        # choose arbitrary site
+        site_choice = sites[randint(0, ns - 1)]
+        message = MessageFactory(body=f'{site_choice.pk}', from_phone_number=message.from_phone_number)  # TODO: test user input errors
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = self.view(request)
@@ -148,7 +172,7 @@ class TestSmsView:
                 parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
 
         # subsequent request shouldn't require PIN
-        message.body = msg_og
+        message = MessageFactory(body=msg_og, from_phone_number=message.from_phone_number)
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = self.view(request)
@@ -164,13 +188,13 @@ class TestSmsView:
         for i in range(n + 2, 2 * (1 + n) - 1):
             msg = msgs[i]
             parent = Parent.objects.get(phone_number=msg['to'])
-            assert msg['body'] == msg_og
+            assert msg['body'] == msg_og_trunc
             assert msg['to'] == phonenumbers.format_number(
                 parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
 
         # subsequent request should require PIN if after timeout
         time.sleep(settings.AUTH_SECONDS + 1)
-        message.body = msg_og
+        message = MessageFactory(body=msg_og, from_phone_number=message.from_phone_number)
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = self.view(request)

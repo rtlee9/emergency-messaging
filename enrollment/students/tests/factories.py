@@ -25,3 +25,10 @@ class ParentFactory(DjangoModelFactory):
     class Meta:
         model = models.Parent
         django_get_or_create = ['phone_number']
+
+
+class SiteFactory(DjangoModelFactory):
+    name = Faker('sentence', nb_words=4)
+
+    class Meta:
+        model = models.Site

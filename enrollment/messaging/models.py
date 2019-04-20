@@ -15,6 +15,7 @@ class Message(models.Model):
     INBOUND = 'inbound'
     OUTBOUND = 'outbound'
     CONFIRMATION = 'confirmation'
+    SITE_PROMPT = 'site_prompt'
 
     def get_absolute_url(self):
         return reverse('messaging:message-detail', kwargs={'sid': self.sid})

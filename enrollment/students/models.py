@@ -42,7 +42,7 @@ class Address(models.Model):
 
 
 class Site(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
 
     def get_absolute_url(self):
         return reverse('students:site-detail', kwargs={'pk': self.pk})
