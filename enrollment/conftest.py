@@ -38,5 +38,15 @@ def parent() -> ParentFactory:
 
 
 @pytest.fixture
+def student() -> StudentFactory:
+    return StudentFactory()
+
+
+@pytest.fixture
 def site() -> SiteFactory:
     return SiteFactory()
+
+
+@pytest.fixture
+def classroom() -> ClassroomFactory:
+    return ClassroomFactory()

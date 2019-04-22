@@ -1,4 +1,4 @@
-from factory import DjangoModelFactory, Faker
+from factory import DjangoModelFactory, Faker, SubFactory, post_generation
 from enrollment.students import models
 from faker.providers import phone_number
 import phonenumbers
@@ -15,6 +15,32 @@ provider.formats = ('+1##########',)
 Faker('phone_number').add_provider(provider)
 
 
+class SiteFactory(DjangoModelFactory):
+    name = Faker('sentence', nb_words=4)
+
+    class Meta:
+        model = models.Site
+
+
+class ClassroomFactory(DjangoModelFactory):
+    name = Faker('sentence', nb_words=4)
+    site = SubFactory(SiteFactory)
+
+    class Meta:
+        model = models.Classroom
+
+
+class StudentFactory(DjangoModelFactory):
+
+    first_name = Faker('first_name')
+    last_name = Faker('last_name')
+    birth_date = Faker('date')
+    classroom = SubFactory(ClassroomFactory)
+
+    class Meta:
+        model = models.Student
+
+
 class ParentFactory(DjangoModelFactory):
 
     first_name = Faker('first_name')
@@ -24,11 +50,12 @@ class ParentFactory(DjangoModelFactory):
 
     class Meta:
         model = models.Parent
-        django_get_or_create = ['phone_number']
 
+    @post_generation
+    def students(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for student in extracted:
+                self.students.add(student)
 
-class SiteFactory(DjangoModelFactory):
-    name = Faker('sentence', nb_words=4)
-
-    class Meta:
-        model = models.Site
