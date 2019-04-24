@@ -11,7 +11,7 @@ from twilio.rest import Client
 import pytz
 from datetime import datetime as dt
 
-from enrollment.students.models import Parent, Site
+from enrollment.students.models import Parent, Site, Student
 from enrollment.messaging.models import Message, MessageStatus
 from enrollment.users.mixins import StaffRequiredMixin
 from django.conf import settings
@@ -167,12 +167,30 @@ def sms_response(request):
             to_phone_number=from_number, msg_type=Message.SITE_PROMPT)
         # get the last of those messages to be delivered successfully
         last_out_status = MessageStatus.objects.\
-            filter(sid__in=msgs_out.values_list('sid', flat=True), status=MessageStatus.TWILIO_DELIVERED).\
+            filter(
+                sid__in=msgs_out.values_list('sid', flat=True),
+                status=MessageStatus.TWILIO_DELIVERED).\
             latest()
         last_out = msgs_out.get(sid=last_out_status.sid)
         now = dt.utcnow().replace(tzinfo=pytz.utc)
         delta = now - last_out_status.datetime
-        if delta.seconds < 60 * 3:  # TODO: move static numbers to config
+
+        # check if a confirmation has been issued more recently
+        try:
+            msgs_out_conf = Message.objects.filter(
+                to_phone_number=from_number, msg_type=Message.CONFIRMATION)
+            last_out_conf_status = MessageStatus.objects.\
+                filter(
+                    sid__in=msgs_out_conf.values_list('sid', flat=True),
+                    status=MessageStatus.TWILIO_DELIVERED).\
+                latest()
+            # last_out_conf = msgs_out.get(sid=last_out_conf_status.sid)
+            more_recent_conf = last_out_conf_status.datetime > last_out_status.datetime
+            print(more_recent_conf, last_out_conf_status.datetime, last_out_status.datetime)
+        except (Message.DoesNotExist, MessageStatus.DoesNotExist):
+            more_recent_conf = False
+
+        if delta.seconds < 60 * 3 and not more_recent_conf:  # TODO: move static numbers to config
             # last message was a site prompt and was recent
             site_prompt_required = False
             # this message is actually a response to the previous prompt
@@ -203,12 +221,22 @@ def sms_response(request):
         )
         return HttpResponse()
 
-    # parse site
-    clean_body = last_out.parent.body[len(settings.SMS_PIN):]
+    # parse site and clean message
+    site_num = int(body)
+    logger.info(f'Parsed site number {body} as {site_num}')
+    logger.info(Site.objects.get(pk=site_num))
+    if last_out.parent.body.startswith(settings.SMS_PIN):
+        clean_body = last_out.parent.body[len(settings.SMS_PIN):]
+    else:
+        clean_body = last_out.parent.body
 
+    # get all students in specified site
+    # TODO: handle errors
+    students_site = Student.objects.filter(classroom__site__pk=site_num)
     # get all parent phone numbers
     # TODO: filter parents related to this site
     parent_phone_numbers = Parent.objects.\
+        filter(students__in=students_site.values_list('pk', flat=True)).\
         values_list('phone_number', flat=True).\
         distinct('phone_number')
 

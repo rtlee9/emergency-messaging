@@ -1,7 +1,7 @@
 import pytest
 from django.conf import settings
 from django.test import RequestFactory
-from random import randint
+from random import randint, choice
 import phonenumbers
 import time
 
@@ -120,6 +120,25 @@ class TestSmsView:
         assert response.status_code == 405
         assert 'not supported' in str(response.content).lower()
 
+    def _gen_family(self, num_parents=2):
+        """Generate a family of num_parents with an arbitrary number of students.
+        """
+        parents = []
+        # add two parents who share ns students
+        num_students = randint(2, 4)
+        students = StudentFactory.create_batch(size=num_students)
+        for _ in range(2):
+            parents.append(ParentFactory(students=students))
+        return parents
+
+    def _gen_all_families(self):
+        # create batch of parents
+        parents = self._gen_family()
+        parents.extend(self._gen_family())
+        parents.extend(self._gen_family(1))
+        parents.extend(self._gen_family(3))
+        return parents
+
     def test_good_message(
         self,
         message: models.Message,
@@ -135,15 +154,7 @@ class TestSmsView:
         classrooms = ClassroomFactory.create_batch(self.nc)
 
         # create batch of parents
-        parents = []
-        # add two parents who share ns students
-        num_students = randint(2, 4)
-        students = StudentFactory.create_batch(size=num_students)
-        for _ in range(2):
-            parents.append(ParentFactory(students=students))
-        n = len(parents)
-
-        # map parents to sites through subfactory
+        parents = self._gen_all_families()
 
         # send request
         request = request_factory.post(
@@ -156,11 +167,16 @@ class TestSmsView:
         assert len(msgs) == 1
         assert msgs[0]['body'].startswith('Please select a site')
         assert len(msgs[0]['body'].split('\n')) == self.ns + 1
+        site_options = [
+            full_option.split(':')[0][1:-1]
+            for full_option
+            in msgs[0]['body'].split('\n')[1:]
+        ]
         views.client.messages.created = []
 
         # choose arbitrary site
-        site_choice = sites[randint(0, self.ns - 1)]
-        message = MessageFactory(body=f'{site_choice.pk}', from_phone_number=message.from_phone_number)  # TODO: test user input errors
+        site_choice = choice(site_options)
+        message = MessageFactory(body=f'{site_choice}', from_phone_number=message.from_phone_number)  # TODO: test user input errors
         request = request_factory.post(
             "/sms/", self._construct_data(message))
         response = self.view(request)
@@ -168,6 +184,9 @@ class TestSmsView:
 
         # check test client for confirmation message
         msgs = views.client.messages.created
+        n = Parent.objects.\
+            filter(students__classroom__site__pk=int(site_choice)).\
+            distinct().count()
         assert len(msgs) == 1 + n
         # last message is confirmation
         assert msgs[-1]['to'] == phonenumbers.format_number(
@@ -180,6 +199,7 @@ class TestSmsView:
             assert msg['body'] == msg_og_trunc
             assert msg['to'] == phonenumbers.format_number(
                 parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
+        views.client.messages.created = []
 
         # subsequent request shouldn't require PIN
         message = MessageFactory(body=msg_og, from_phone_number=message.from_phone_number)
@@ -187,22 +207,48 @@ class TestSmsView:
             "/sms/", self._construct_data(message))
         response = self.view(request)
         self._test_empty_response(response)
-        # check test client for confirmation message
+
+        # check for site prompt [COPY]
         msgs = views.client.messages.created
-        assert len(msgs) == 2 * (1 + n)
+        assert len(msgs) == 1
+        assert msgs[0]['body'].startswith('Please select a site')
+        assert len(msgs[0]['body'].split('\n')) == self.ns + 1
+        site_options = [
+            full_option.split(':')[0][1:-1]
+            for full_option
+            in msgs[0]['body'].split('\n')[1:]
+        ]
+        views.client.messages.created = []
+
+        # choose arbitrary site [COPY]
+        site_choice = choice(site_options)
+        message = MessageFactory(body=f'{site_choice}', from_phone_number=message.from_phone_number)  # TODO: test user input errors
+        request = request_factory.post(
+            "/sms/", self._construct_data(message))
+        response = self.view(request)
+        self._test_empty_response(response)
+
+        # check test client for confirmation message [COPY]
+        msgs = views.client.messages.created
+        n = Parent.objects.\
+            filter(students__classroom__site__pk=int(site_choice)).\
+            distinct().count()
+        assert len(msgs) == 1 + n
         # last message is confirmation
         assert msgs[-1]['to'] == phonenumbers.format_number(
             message.from_phone_number, phonenumbers.PhoneNumberFormat.E164)
         assert msgs[-1]['body'].lower().startswith('your message has been sent')
         # check messages to all parents
-        for i in range(n + 2, 2 * (1 + n) - 1):
+        for i in range(n - 1):
             msg = msgs[i]
             parent = Parent.objects.get(phone_number=msg['to'])
-            assert msg['body'] == msg_og_trunc
+            assert msg['body'] == msg_og
             assert msg['to'] == phonenumbers.format_number(
                 parent.phone_number, phonenumbers.PhoneNumberFormat.E164)
+        views.client.messages.created = []
 
         # subsequent request should require PIN if after timeout
+        msgs = views.client.messages.created
         time.sleep(settings.AUTH_SECONDS + 1)
         message = MessageFactory(body=msg_og, from_phone_number=message.from_phone_number)
         request = request_factory.post(
@@ -211,7 +257,8 @@ class TestSmsView:
         self._test_empty_response(response)
         # check test client for confirmation message
         msgs = views.client.messages.created
-        assert len(msgs) == 2 * (1 + n) + 1
+        assert len(msgs) == 1
         # last message is confirmation
         assert msgs[-1]['to'] == message.from_phone_number
         assert msgs[-1]['body'] == 'Incorrect PIN'
+        views.client.messages.created = []
