@@ -7,7 +7,7 @@ import time
 
 from enrollment.messaging import views, models
 from enrollment.students.tests.factories import ParentFactory, SiteFactory, StudentFactory, ClassroomFactory
-from enrollment.students.models import Parent
+from enrollment.students.models import Parent, Student, Classroom, Site
 from .factories import MessageFactory
 
 pytestmark = pytest.mark.django_db
@@ -77,17 +77,19 @@ class TestSmsView:
         self.view = views.sms_response
         views.client = TwilioTestClient(
             settings.TWILIO_SID, settings.TWILIO_TOKEN)
-
-    def _setup_sites(self):
-        # create batch of sites and classrooms
         self.sites = SiteFactory.create_batch(self.ns)
         self.classrooms = ClassroomFactory.create_batch(self.nc)
         self.parents = self._gen_all_families()
 
+    def teardown(self):
+        Site.objects.all().delete()
+        Classroom.objects.all().delete()
+        Parent.objects.all().delete()
+        Student.objects.all().delete()
+
     def test_no_pin(
         self,
         message: models.Message,
-        message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
         request = request_factory.post(
@@ -105,7 +107,6 @@ class TestSmsView:
     def test_no_from_number(
         self,
         message: models.Message,
-        message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
         data = self._construct_data(message)
@@ -118,7 +119,6 @@ class TestSmsView:
     def test_get_request(
         self,
         message: models.Message,
-        message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
         request = request_factory.get("/sms/")
@@ -221,17 +221,14 @@ class TestSmsView:
         # check test client for confirmation message
         msgs = views.client.messages.created
         assert len(msgs) == 1
-        # last message is confirmation
         assert msgs[-1]['to'] == message.from_phone_number
         assert msgs[-1]['body'] == 'Incorrect PIN'
 
     def test_good_message(
         self,
         message: models.Message,
-        message_status: models.MessageStatus,
         request_factory: RequestFactory,
     ):
-        self._setup_sites()  # setup
         # construct message with PIN
         msg_og = message.body
         msg_og_trunc = msg_og[:-len(settings.SMS_PIN)]
@@ -242,12 +239,42 @@ class TestSmsView:
         self._request_check_empty(message, request_factory)
         site_choice = self._handle_respond_site_prompt(from_phone_number, request_factory)
         self._test_distribution(site_choice, from_phone_number, msg_og_trunc)
+        return from_phone_number
+
+    def test_subsequent_requst(
+        self,
+        message: models.Message,
+        request_factory: RequestFactory,
+    ):
 
         # subsequent request shouldn't require PIN
+        from_phone_number = self.test_good_message(message, request_factory)
         message = MessageFactory(from_phone_number=from_phone_number)
         self._request_check_empty(message, request_factory)
         site_choice = self._handle_respond_site_prompt(from_phone_number, request_factory)
         self._test_distribution(site_choice, from_phone_number, message.body)
 
+    def test_bad_group_selection(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        # check site prompt, choose bad site, confirm error handling
+        from_phone_number = self.test_good_message(message, request_factory)
+        self._request_check_empty(message, request_factory)
+        site_choice = self._handle_respond_site_prompt(
+            from_phone_number, request_factory, site_choice='a')
+        msgs = views.client.messages.created
+        assert len(msgs) == 1
+        assert msgs[-1]['to'] == message.from_phone_number
+        assert 'group selection' in msgs[-1]['body'].lower()
+        assert 'integer' in msgs[-1]['body'].lower()
+
+    def test_pin_timeout(
+        self,
+        message: models.Message,
+        request_factory: RequestFactory,
+    ):
         # subsequent request should require PIN if after timeout
+        from_phone_number = self.test_good_message(message, request_factory)
         self._test_pin_timeout(from_phone_number, request_factory)

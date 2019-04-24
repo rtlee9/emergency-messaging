@@ -149,7 +149,7 @@ def sms_response(request):
             to=from_number,
             callback=callback,
             parent=message_in,
-            msg_type=MessageStatus.AUTH_FAIL,
+            msg_type=Message.EXCEPTION_AUTH_FAIL,
         )
         return HttpResponse()
     else:
@@ -222,9 +222,18 @@ def sms_response(request):
         return HttpResponse()
 
     # parse site and clean message
-    site_num = int(body)
-    logger.info(f'Parsed site number {body} as {site_num}')
-    logger.info(Site.objects.get(pk=site_num))
+    try:
+        site_num = int(body)
+    except ValueError:
+        MessageStatus(status=MessageStatus.BAD_GROUP, sid=sid).save()
+        send_message(
+            body="Group selection must be an integer",
+            to=from_number,
+            callback=callback,
+            parent=message_in,
+            msg_type=Message.EXCEPTION_BAD_GROUP,
+        )
+        return HttpResponse()
     if last_out.parent.body.startswith(settings.SMS_PIN):
         clean_body = last_out.parent.body[len(settings.SMS_PIN):]
     else:

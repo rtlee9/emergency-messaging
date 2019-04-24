@@ -16,6 +16,8 @@ class Message(models.Model):
     OUTBOUND = 'outbound'
     CONFIRMATION = 'confirmation'
     SITE_PROMPT = 'site_prompt'
+    EXCEPTION_AUTH_FAIL = 'exception_auth_fail'
+    EXCEPTION_BAD_GROUP = 'exception_bad_group'
 
     def get_absolute_url(self):
         return reverse('messaging:message-detail', kwargs={'sid': self.sid})
@@ -37,6 +39,7 @@ class MessageStatus(models.Model):
     AUTH_FAIL = 'auth_fail'
     AUTH_PASS = 'auth_pass'
     AUTH_SKIP = 'auth_skip'
+    BAD_GROUP = 'bad_group'
     TWILIO_QUEUED = 'queued'
     TWILIO_FAILED = 'failed'
     TWILIO_SENT = 'sent'
