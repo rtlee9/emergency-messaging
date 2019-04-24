@@ -4,7 +4,7 @@ from django.test import RequestFactory
 
 from enrollment.users.tests.factories import UserFactory
 from enrollment.messaging.tests.factories import MessageFactory, MessageStatusFactory
-from enrollment.students.tests.factories import ParentFactory, SiteFactory
+from enrollment.students.tests.factories import ParentFactory, SiteFactory, StudentFactory, ClassroomFactory
 
 
 @pytest.fixture(autouse=True)

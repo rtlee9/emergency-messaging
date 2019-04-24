@@ -1,4 +1,4 @@
-from factory import DjangoModelFactory, Faker, SubFactory, post_generation
+from factory import DjangoModelFactory, Faker, post_generation, Iterator
 from enrollment.students import models
 from faker.providers import phone_number
 import phonenumbers
@@ -24,7 +24,7 @@ class SiteFactory(DjangoModelFactory):
 
 class ClassroomFactory(DjangoModelFactory):
     name = Faker('sentence', nb_words=4)
-    site = SubFactory(SiteFactory)
+    site = Iterator(models.Site.objects.all())
 
     class Meta:
         model = models.Classroom
@@ -35,7 +35,7 @@ class StudentFactory(DjangoModelFactory):
     first_name = Faker('first_name')
     last_name = Faker('last_name')
     birth_date = Faker('date')
-    classroom = SubFactory(ClassroomFactory)
+    classroom = Iterator(models.Classroom.objects.all())
 
     class Meta:
         model = models.Student
@@ -58,4 +58,3 @@ class ParentFactory(DjangoModelFactory):
         if extracted:
             for student in extracted:
                 self.students.add(student)
-

@@ -6,7 +6,7 @@ import phonenumbers
 import time
 
 from enrollment.messaging import views, models
-from enrollment.students.tests.factories import ParentFactory, SiteFactory
+from enrollment.students.tests.factories import ParentFactory, SiteFactory, StudentFactory, ClassroomFactory
 from enrollment.students.models import Parent
 from .factories import MessageFactory
 
@@ -53,6 +53,9 @@ class TwilioTestMessage(object):
 
 
 class TestSmsView:
+    ns = 3
+    nc = 20
+    np = 40
 
     @classmethod
     def _construct_data(cls, message):
@@ -127,13 +130,20 @@ class TestSmsView:
         msg_og_trunc = msg_og[:-len(settings.SMS_PIN)]
         message.body = settings.SMS_PIN + msg_og_trunc
 
-        # create batch of parents
-        n = randint(2, 10)
-        parents = ParentFactory.create_batch(size=n)
-
         # create batch of sites
-        ns = randint(2, 4)
-        sites = SiteFactory.create_batch(size=ns)
+        sites = SiteFactory.create_batch(self.ns)
+        classrooms = ClassroomFactory.create_batch(self.nc)
+
+        # create batch of parents
+        parents = []
+        # add two parents who share ns students
+        num_students = randint(2, 4)
+        students = StudentFactory.create_batch(size=num_students)
+        for _ in range(2):
+            parents.append(ParentFactory(students=students))
+        n = len(parents)
+
+        # map parents to sites through subfactory
 
         # send request
         request = request_factory.post(
@@ -145,11 +155,11 @@ class TestSmsView:
         msgs = views.client.messages.created
         assert len(msgs) == 1
         assert msgs[0]['body'].startswith('Please select a site')
-        assert len(msgs[0]['body'].split('\n')) == ns + 1
+        assert len(msgs[0]['body'].split('\n')) == self.ns + 1
         views.client.messages.created = []
 
         # choose arbitrary site
-        site_choice = sites[randint(0, ns - 1)]
+        site_choice = sites[randint(0, self.ns - 1)]
         message = MessageFactory(body=f'{site_choice.pk}', from_phone_number=message.from_phone_number)  # TODO: test user input errors
         request = request_factory.post(
             "/sms/", self._construct_data(message))
