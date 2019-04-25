@@ -186,7 +186,6 @@ def sms_response(request):
                 latest()
             # last_out_conf = msgs_out.get(sid=last_out_conf_status.sid)
             more_recent_conf = last_out_conf_status.datetime > last_out_status.datetime
-            print(more_recent_conf, last_out_conf_status.datetime, last_out_status.datetime)
         except (Message.DoesNotExist, MessageStatus.DoesNotExist):
             more_recent_conf = False
 
@@ -240,10 +239,17 @@ def sms_response(request):
         clean_body = last_out.parent.body
 
     # get all students in specified site
-    # TODO: handle errors
     students_site = Student.objects.filter(classroom__site__pk=site_num)
+    if students_site.count() == 0:
+        send_message(
+            body="No students found for the specified group",
+            to=from_number,
+            callback=callback,
+            parent=message_in,
+            msg_type=Message.EXCEPTION_BAD_GROUP,
+        )
+        return HttpResponse()
     # get all parent phone numbers
-    # TODO: filter parents related to this site
     parent_phone_numbers = Parent.objects.\
         filter(students__in=students_site.values_list('pk', flat=True)).\
         values_list('phone_number', flat=True).\

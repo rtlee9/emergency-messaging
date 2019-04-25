@@ -253,21 +253,58 @@ class TestSmsView:
         site_choice = self._handle_respond_site_prompt(from_phone_number, request_factory)
         self._test_distribution(site_choice, from_phone_number, message.body)
 
-    def test_bad_group_selection(
+    @clear_client
+    def _test_bad_group_selection(
             self,
             message: models.Message,
             request_factory: RequestFactory,
+            site_choice: str,
+            expected_response: str,
     ):
         # check site prompt, choose bad site, confirm error handling
         from_phone_number = self.test_good_message(message, request_factory)
         self._request_check_empty(message, request_factory)
         site_choice = self._handle_respond_site_prompt(
-            from_phone_number, request_factory, site_choice='a')
+            from_phone_number, request_factory, site_choice=site_choice)
         msgs = views.client.messages.created
         assert len(msgs) == 1
         assert msgs[-1]['to'] == message.from_phone_number
-        assert 'group selection' in msgs[-1]['body'].lower()
-        assert 'integer' in msgs[-1]['body'].lower()
+        assert expected_response.lower() in msgs[-1]['body'].lower()
+
+    def test_bad_group_selection_char(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        self._test_bad_group_selection(message, request_factory, 'a', 'must be an integer')
+
+    def test_bad_group_selection_str(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        self._test_bad_group_selection(message, request_factory, message.body, 'must be an integer')
+
+    def test_bad_group_selection_negative_int(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        self._test_bad_group_selection(message, request_factory, -1, 'no students found')
+
+    def test_bad_group_selection_large_float(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        self._test_bad_group_selection(message, request_factory, 10e6, 'must be an integer')
+
+    def test_bad_group_selection_large_int(
+            self,
+            message: models.Message,
+            request_factory: RequestFactory,
+    ):
+        self._test_bad_group_selection(message, request_factory, 1000, 'no students found')
 
     @pytest.mark.slow
     def test_pin_timeout(
