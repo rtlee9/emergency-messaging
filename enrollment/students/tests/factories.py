@@ -15,6 +15,11 @@ provider.formats = ('+1##########',)
 Faker('phone_number').add_provider(provider)
 
 
+def iter_random(model):
+    while True:
+        yield model.objects.order_by('?').first()
+
+
 class SiteFactory(DjangoModelFactory):
     name = Faker('sentence', nb_words=4)
 
@@ -24,7 +29,7 @@ class SiteFactory(DjangoModelFactory):
 
 class ClassroomFactory(DjangoModelFactory):
     name = Faker('sentence', nb_words=4)
-    site = Iterator(models.Site.objects.all())
+    site = Iterator(iter_random(models.Site))
 
     class Meta:
         model = models.Classroom
@@ -35,7 +40,7 @@ class StudentFactory(DjangoModelFactory):
     first_name = Faker('first_name')
     last_name = Faker('last_name')
     birth_date = Faker('date')
-    classroom = Iterator(models.Classroom.objects.all())
+    classroom = Iterator(iter_random(models.Classroom))
 
     class Meta:
         model = models.Student

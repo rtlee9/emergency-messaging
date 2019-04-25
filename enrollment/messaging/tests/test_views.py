@@ -246,7 +246,6 @@ class TestSmsView:
         message: models.Message,
         request_factory: RequestFactory,
     ):
-
         # subsequent request shouldn't require PIN
         from_phone_number = self.test_good_message(message, request_factory)
         message = MessageFactory(from_phone_number=from_phone_number)
