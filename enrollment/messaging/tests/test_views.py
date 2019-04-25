@@ -270,6 +270,7 @@ class TestSmsView:
         assert 'group selection' in msgs[-1]['body'].lower()
         assert 'integer' in msgs[-1]['body'].lower()
 
+    @pytest.mark.slow
     def test_pin_timeout(
         self,
         message: models.Message,
