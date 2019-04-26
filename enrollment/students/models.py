@@ -87,3 +87,4 @@ class Parent(Person):
 
     def get_absolute_url(self):
         return reverse('students:parent-detail', kwargs={'pk': self.pk})
+

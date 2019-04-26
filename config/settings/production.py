@@ -202,4 +202,4 @@ sentry_sdk.init(dsn=SENTRY_DSN, integrations=[sentry_logging, DjangoIntegration(
 # Your stuff...
 # ------------------------------------------------------------------------------
 TWILIO_NUMBER = env('TWILIO_NUMBER')
-AUTH_SECONDS = 60 * 3
+AUTH_SECONDS = 60 * 10
