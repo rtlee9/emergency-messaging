@@ -122,9 +122,11 @@ class ParentUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     fields = ['first_name', 'last_name', 'email', 'phone_number', 'students', 'address']
 
     def get_initial(self):
-        return {
-            'students': self.request.GET.getlist('student_id'),
-        }
+        initial = {}
+        student_args = self.request.GET.getlist('student_id')
+        if student_args:
+            initial['students'] = student_args
+        return initial
 
 
 class ParentDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
