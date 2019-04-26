@@ -29,7 +29,7 @@ class MessageListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
     model = Message
 
     def get_queryset(self):
-        return Message.objects.filter(msg_type=Message.INBOUND)
+        return Message.objects.filter(msg_type=Message.INBOUND).filter(parent__isnull=True)
 
 
 class MessageDetailView(LoginRequiredMixin, StaffRequiredMixin, ListView):
