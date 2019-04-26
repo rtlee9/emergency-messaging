@@ -83,7 +83,7 @@ class Parent(Person):
     students = models.ManyToManyField(Student)
     email = models.EmailField()
     phone_number = PhoneNumberField(unique=True)
-    address = models.ForeignKey(Address, null=True, on_delete=models.SET_NULL)
+    address = models.ForeignKey(Address, blank=True, null=True, on_delete=models.SET_NULL)
 
     def get_absolute_url(self):
         return reverse('students:parent-detail', kwargs={'pk': self.pk})
