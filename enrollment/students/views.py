@@ -48,23 +48,32 @@ class AddressCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Address
     fields = ['address_1', 'address_2', 'city', 'state', 'zip_code']
 
+    def get_context_data(self, **kwargs):
+        parent_id = self.request.GET.get('parent_id')
+        context = super().get_context_data(**kwargs)
+        try:
+            context['parent'] = models.Parent.objects.get(pk=parent_id)
+        except models.Parent.DoesNotExist:
+            logger.error(f'Parent {parent_id} does not exist')
+        return context
+
     def form_valid(self, form):
-        """ If coming from classroom creation then associate this address with
-        that classroom and return classroom view.
+        """ If coming from parent creation then associate this address with
+        that parent and return parent view.
         """
-        classroom_id = self.request.GET.get('classroom_id')
-        if classroom_id:
+        parent_id = self.request.GET.get('parent_id')
+        if parent_id:
             try:
-                classroom = models.Site.objects.get(pk=classroom_id)
-            except models.Site.DoesNotExist:
-                logger.warning(f'Site ID {classroom_id} does not exist ({self})')
+                parent = models.Parent.objects.get(pk=parent_id)
+            except models.Parent.DoesNotExist:
+                logger.warning(f'Site ID {parent_id} does not exist ({self})')
                 return super().form_valid(form)
-            logger.debug(f'Site for {self} is {classroom}')
+            logger.debug(f'Site for {self} is {parent}')
             logger.debug(form.instance)
             response = super().form_valid(form)
-            classroom.address = form.instance
-            classroom.save(update_fields=['address'])
-            redirect_url_base = reverse_lazy('students:classroom-detail', kwargs={'pk': classroom_id})
+            parent.address = form.instance
+            parent.save(update_fields=['address'])
+            redirect_url_base = reverse_lazy('students:parent-detail', kwargs={'pk': parent_id})
             return HttpResponseRedirect(f'{redirect_url_base}?address_id={form.instance.pk}')
         return super().form_valid(form)
 

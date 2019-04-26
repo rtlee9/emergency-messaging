@@ -4,7 +4,8 @@
 {% block title %}{{ address.address_1 }}{% endblock %}
 
 {% block content %}
-  <h1>{{ address }}</h1>
+  {% if address %}<h1>{{ address }}</h1>{% endif %}
+  {% if parent %}<h2>Add address for {{ parent }}</h2>{% endif %}
   <form class="form-horizontal" method="post">
     {% csrf_token %}
     {{ form|crispy }}
