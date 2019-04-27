@@ -12,11 +12,11 @@ from enrollment.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 
-class TestParentListView:
+class BaseTestListView:
 
     @pytest.fixture(autouse=True)
     def setUp(self, request_factory: RequestFactory):
-        self.view = views.ParentListView.as_view()
+        self.view = self.view_class.as_view()
         self.request = request_factory.get("/parents/")
 
     def test_not_staff(self, user: UserFactory):
@@ -36,3 +36,19 @@ class TestParentListView:
         self.request.user = user
         response = self.view(self.request)
         assert response.status_code == 200
+
+
+class TestParentListView(BaseTestListView):
+    view_class = views.ParentListView
+
+
+class TestClassroomListView(BaseTestListView):
+    view_class = views.ClassroomListView
+
+
+class TestStudentListView(BaseTestListView):
+    view_class = views.StudentListView
+
+
+class TestSiteListView(BaseTestListView):
+    view_class = views.SiteListView

@@ -315,3 +315,4 @@ class TestSmsView:
         # subsequent request should require PIN if after timeout
         from_phone_number = self.test_good_message(message, request_factory)
         self._test_pin_timeout(from_phone_number, request_factory)
+
