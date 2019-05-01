@@ -18,53 +18,122 @@ class BaseTestView:
 
     @pytest.fixture(autouse=True)
     def setUp(self, request_factory: RequestFactory):
-        self.list_view = self.list_view.as_view()
-        self.detail_view = self.detail_view.as_view()
+        self.view = self.view_class.as_view()
         self.request = request_factory.get(f"/{self.url_path}/")
         self.client = Client()
+
+    def make_request(self, request):
+        return self.view(request)
 
     def test_not_staff(self, user: UserFactory):
         self.request.user = user
         with pytest.raises(PermissionDenied) as exp:
-            response = self.list_view(self.request)
+            response = self.make_request(self.request)
             assert 'access required' in str(exp.value)
 
     def test_anonymous_user(self):
         self.request.user = AnonymousUser()
-        response = self.list_view(self.request)
+        response = self.make_request(self.request)
         assert response.status_code == 302
         assert 'login' in response.url
 
     def test_user_staff(self, user: UserFactory):
         user.is_staff = True
         self.request.user = user
-        assert self.list_view(self.request).status_code == 200
-        assert self.detail_view(self.request, pk=self.factory().pk).status_code == 200
+        assert self.make_request(self.request).status_code == 200
 
 
-class TestParentView(BaseTestView):
+class BaseTestPkView(BaseTestView):
+    """Handles pk based requests."""
+
+    def make_request(self, request):
+        return self.view(request, pk=self.factory().pk)
+
+
+class BaseTestParentView(BaseTestView):
+    """Base class for Parent views."""
     factory = factories.ParentFactory
-    list_view = views.ParentListView
-    detail_view = views.ParentDetailView
     url_path = 'parents'
 
 
-class TestClassroomView(BaseTestView):
+class TestParentViewList(BaseTestParentView):
+    view_class = views.ParentListView
+
+
+class TestParentViewCreate(BaseTestParentView):
+    view_class = views.ParentCreate
+
+
+class TestParentViewDetail(BaseTestParentView, BaseTestPkView):
+    view_class = views.ParentDetailView
+
+
+class TestParentViewDelete(BaseTestParentView, BaseTestPkView):
+    view_class = views.ParentDelete
+
+
+class BaseTestClassroomView(BaseTestView):
+    """Base class for Classroom views."""
+    view_class = views.ClassroomListView
     factory = factories.ClassroomFactory
-    list_view = views.ClassroomListView
-    detail_view = views.ClassroomDetailView
     url_path = 'classroom'
 
 
-class TestStudentView(BaseTestView):
+class TestClassroomViewList(BaseTestClassroomView):
+    view_class = views.ClassroomListView
+
+
+class TestClassroomViewCreate(BaseTestClassroomView):
+    view_class = views.ClassroomCreate
+
+
+class TestClassroomViewDetail(BaseTestClassroomView, BaseTestPkView):
+    view_class = views.ClassroomDetailView
+
+
+class TestClassroomViewDelete(BaseTestClassroomView, BaseTestPkView):
+    view_class = views.ClassroomDelete
+
+
+class BaseTestStudentView(BaseTestView):
+    """Base class for Student views."""
     factory = factories.StudentFactory
-    list_view = views.StudentListView
-    detail_view = views.StudentDetailView
     url_path = 'students'
 
 
-class TestSiteView(BaseTestView):
+class TestStudentViewList(BaseTestStudentView):
+    view_class = views.StudentListView
+
+
+class TestStudentViewCreate(BaseTestStudentView):
+    view_class = views.StudentCreate
+
+
+class TestStudentViewDetail(BaseTestStudentView, BaseTestPkView):
+    view_class = views.StudentDetailView
+
+
+class TestStudentViewDelete(BaseTestStudentView, BaseTestPkView):
+    view_class = views.StudentDelete
+
+
+class BaseTestSiteView(BaseTestView):
+    """Base class for Student views."""
     factory = factories.SiteFactory
-    list_view = views.SiteListView
-    detail_view = views.SiteDetailView
     url_path = 'sites'
+
+
+class TestSiteViewList(BaseTestSiteView):
+    view_class = views.SiteListView
+
+
+class TestSiteViewCreate(BaseTestSiteView):
+    view_class = views.SiteCreate
+
+
+class TestSiteViewDetail(BaseTestSiteView, BaseTestPkView):
+    view_class = views.SiteDetailView
+
+
+class TestSiteViewDelete(BaseTestSiteView, BaseTestPkView):
+    view_class = views.SiteDelete
