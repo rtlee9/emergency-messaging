@@ -63,6 +63,15 @@ class TestParentViewList(BaseTestParentView):
 class TestParentViewCreate(BaseTestParentView):
     view_class = views.ParentCreate
 
+    def test_initial_student(self, user: UserFactory):
+        student = factories.StudentFactory()
+        path = f'/{self.url_path}/add/?student_id={student.pk}'
+        self.request = RequestFactory().get(path)
+        user.is_staff = True
+        self.request.user = user
+        response = self.make_request(self.request)
+        assert response.context_data['form'].initial['students'] == [str(student.pk)]
+
 
 class TestParentViewDetail(BaseTestParentView, BaseTestPkView):
     view_class = views.ParentDetailView
