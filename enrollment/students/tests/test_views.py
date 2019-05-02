@@ -77,6 +77,10 @@ class TestParentViewDetail(BaseTestParentView, BaseTestPkView):
     view_class = views.ParentDetailView
 
 
+class TestParentViewUpdate(BaseTestParentView, BaseTestPkView):
+    view_class = views.ParentUpdate
+
+
 class TestParentViewDelete(BaseTestParentView, BaseTestPkView):
     view_class = views.ParentDelete
 
@@ -98,6 +102,10 @@ class TestClassroomViewCreate(BaseTestClassroomView):
 
 class TestClassroomViewDetail(BaseTestClassroomView, BaseTestPkView):
     view_class = views.ClassroomDetailView
+
+
+class TestClassroomViewUpdate(BaseTestClassroomView, BaseTestPkView):
+    view_class = views.ClassroomUpdate
 
 
 class TestClassroomViewDelete(BaseTestClassroomView, BaseTestPkView):
@@ -122,6 +130,10 @@ class TestStudentViewDetail(BaseTestStudentView, BaseTestPkView):
     view_class = views.StudentDetailView
 
 
+class TestStudentViewUpdate(BaseTestStudentView, BaseTestPkView):
+    view_class = views.StudentUpdate
+
+
 class TestStudentViewDelete(BaseTestStudentView, BaseTestPkView):
     view_class = views.StudentDelete
 
@@ -142,6 +154,10 @@ class TestSiteViewCreate(BaseTestSiteView):
 
 class TestSiteViewDetail(BaseTestSiteView, BaseTestPkView):
     view_class = views.SiteDetailView
+
+
+class TestSiteViewUpdate(BaseTestSiteView, BaseTestPkView):
+    view_class = views.SiteUpdate
 
 
 class TestSiteViewDelete(BaseTestSiteView, BaseTestPkView):
