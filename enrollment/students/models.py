@@ -55,7 +55,7 @@ class Site(models.Model):
 
 
 class Classroom(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=256)
     site = models.ForeignKey(Site, blank=True, null=True, on_delete=models.SET_NULL)
 
     def get_absolute_url(self):
@@ -69,8 +69,8 @@ class Classroom(models.Model):
 
 
 class Student(Person):
-    birth_date = models.DateField()
-    classroom = models.ForeignKey(Classroom, blank=True, null=True, on_delete=models.SET_NULL)
+    birth_date = models.DateField(blank=True, null=True)
+    classrooms = models.ManyToManyField(Classroom)
 
     class Meta:
         ordering = ['first_name', 'last_name', 'birth_date']
@@ -82,7 +82,7 @@ class Student(Person):
 class Parent(Person):
     students = models.ManyToManyField(Student)
     email = models.EmailField()
-    phone_number = PhoneNumberField(unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
     address = models.ForeignKey(Address, blank=True, null=True, on_delete=models.SET_NULL)
 
     def get_absolute_url(self):
