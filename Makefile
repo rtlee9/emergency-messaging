@@ -1,7 +1,7 @@
 all : clean
 
 parents.zip :
-	wget 'https://www.dropbox.com/s/z7hvm3r9rsq1jnl/parents.zip'
+	wget ${ARGS}
 
 .unzip : parents.zip
 	unzip parents.zip
