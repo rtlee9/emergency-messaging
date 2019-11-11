@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import json
 import pandas as pd
+import numpy as np
 import glob
 import logging
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     def handle(self, **options):
         # read data
-        raw_data_filenames = glob.glob('Emergency Notification System/* Parent Contacts.xlsx')
+        raw_data_filenames = glob.glob('data/* Parent Contacts.xlsx')
         df_campuses = []
         for rdf in raw_data_filenames:
             df = pd.read_excel(rdf, skiprows=3, index_col=0)
@@ -26,10 +27,11 @@ class Command(BaseCommand):
         logger.info('Read {:,.0f} students from disk'.format(df.shape[0]))
 
         # process programs
-        df.enrolled_programs = df.enrolled_programs.\
-            str.replace(' :', '"').\
-            str.replace('{:', '{"').\
-            str.replace('=>', '": ').map(json.loads)
+        df.enrolled_programs = np.where(
+            df.enrolled_programs.str.contains('(', regex=False),
+            df.enrolled_programs.str.split('(').str[1].str.split(')').str[0],
+            df.enrolled_programs.str.strip(),
+        )
 
         # process parent names
         split = df.parent_1_name.str.split(', ')
@@ -41,11 +43,13 @@ class Command(BaseCommand):
 
         for idx, sr in df.iterrows():
             site, created = models.Site.objects.get_or_create(name=sr.campus)
-            student, created = models.Student.objects.get_or_create(first_name=sr.first_name, last_name=sr.last_name)
+            student, created = models.Student.objects.get_or_create(
+                first_name=sr.first_name.strip(), last_name=sr.last_name.strip())
 
-            for program in sr.enrolled_programs:
-                classroom, created = models.Classroom.objects.get_or_create(name=program['description'], site=site)
-                student.classrooms.add(classroom)
+            student.classrooms.clear()
+            classroom, created = models.Classroom.objects.get_or_create(
+                name=sr.enrolled_programs, site=site)
+            student.classrooms.add(classroom)
 
             p1, created = models.Parent.objects.get_or_create(
                 first_name=sr.parent_1_first_name,
