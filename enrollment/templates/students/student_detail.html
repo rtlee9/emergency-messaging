@@ -21,6 +21,10 @@
       {% for parent in object.parent_set.all %}
       <p><a href="{% url 'students:parent-detail' parent.pk %}">{{ parent }}</a></p>
       {% endfor %}
+      <h3>Classrooms:</h3>
+      {% for classroom in object.classrooms.all %}
+      <p><a href="{% url 'students:classroom-detail' classroom.pk %}">{{ classroom }}</a></p>
+      {% endfor %}
       {% endif %}
     </div>
   </div>
