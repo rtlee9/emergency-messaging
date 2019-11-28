@@ -42,6 +42,14 @@ class StudentFactory(DjangoModelFactory):
     birth_date = Faker('date')
     classroom = Iterator(iter_random(models.Classroom))
 
+    @post_generation
+    def classrooms(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted:
+            for classroom in extracted:
+                self.classroom.add(classroom)
+
     class Meta:
         model = models.Student
 

@@ -23,12 +23,12 @@ class StudentListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
 
 class StudentCreate(LoginRequiredMixin, StaffRequiredMixin, CreateView):
     model = models.Student
-    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
+    fields = ['first_name', 'last_name', 'birth_date', 'classrooms']
 
 
 class StudentUpdate(LoginRequiredMixin, StaffRequiredMixin, UpdateView):
     model = models.Student
-    fields = ['first_name', 'last_name', 'birth_date', 'classroom']
+    fields = ['first_name', 'last_name', 'birth_date', 'classrooms']
 
 
 class StudentDelete(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
